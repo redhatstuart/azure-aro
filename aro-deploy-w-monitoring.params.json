@@ -6,22 +6,22 @@
             "value": "westcentralus"
         },
         "clusterName": {
-            "value": "<replace>"
+            "value": "aro-w-monitoring2"
         },
         "aadTenantId": {
-            "value": "<replace>"
+            "value": "2cbfe652-c273-4b77-a487-b323ddaa02fd"
         },
         "aadClientId": {
-            "value": "<replace>"
+            "value": "e430bd2c-f5c2-431d-a80d-9462c318d076"
         },
         "aadClientSecret": {
-            "value": "<replace>"
+            "value": "5JU11GT*wg@0sp/k?9+YZG@oAykZhSno"
         },
         "aadCustomerAdminGroupId": {
-            "value": "<replace>"
+            "value": "7b7f5f18-1fa1-4c3f-a4fc-8827057a724c"
         },
         "logAnalyticsWorkspaceName": {
-            "value": "<log analytics workspace name>"
+            "value": "aro-log-workspace2"
         },
         "logAnalyticsLocation": {
           "value": "westus"

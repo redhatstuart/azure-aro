@@ -99,7 +99,7 @@
             {
               "role": "compute",
               "name": "compute",
-              "count": 1,
+              "count": 4,
               "subnetCidr": "10.0.0.0/24",
               "vmSize": "Standard_D4s_v3",
               "osType": "Linux"
