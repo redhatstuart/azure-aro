@@ -31,7 +31,7 @@ echo "------------------------------------"
 
 # Resource Group
 echo "Creating Resource Group"
-az group create -g "$RESOURCEGROUP" -l $LOCATION --tags "ARO 4.3 created `date +%Y%m%d`" >> /dev/null 2>&1 
+az group create -g "$RESOURCEGROUP" -l "$LOCATION" --tags "ARO 4.3 Build Date=`date +%Y%m%d`" >> /dev/null 2>&1 
 
 # VNet Creation
 echo "Creating Virtual Network"
