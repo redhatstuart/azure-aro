@@ -47,7 +47,7 @@ az network vnet subnet update -g "$RESOURCEGROUP" --vnet-name $VNET_NAME -n "$CL
 
 # Build ARO
 echo "Building Azure Red Hat OpenShift 4.3 - this takes roughly 30 minutes"
-time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --vnet "$VNET_NAME" --master-subnet "$CLUSTER-master" --worker-subnet "$CLUSTER-worker" --ingress-visibility "$INGRESSPRIVACY" --apiserver-visibility "$APIPRIVACY" --worker-count "$WORKERS" --tags "ARO 4.3 Build Date=`date +%Y%m%d`" 2>/dev/null
+az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --vnet "$VNET_NAME" --master-subnet "$CLUSTER-master" --worker-subnet "$CLUSTER-worker" --ingress-visibility "$INGRESSPRIVACY" --apiserver-visibility "$APIPRIVACY" --worker-count "$WORKERS" --tags "ARO 4.3 Build Date=`date +%Y%m%d`" 2>/dev/null
 
 # Output Messages
 
