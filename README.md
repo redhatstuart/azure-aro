@@ -1,13 +1,16 @@
 # azure-aro
 Azure Red Hat OpenShift (ARO) Deployment Code
 
-Site content:
-
-Azure Red Hat OpenShift 3.11
+<u>Azure Red Hat OpenShift 3.11</u>
 
 * aro-311-deploy.json
 * aro-311-deploy.json.params
+```
+Text
+```
+<u>Azure Red Hat OpenShift 4.3</U>
 
-Azure Red Hat OpenShift 4.3
-
-* ar43-build.sh
+* aro43-build.sh
+```
+Text
+```
