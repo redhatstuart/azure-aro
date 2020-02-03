@@ -1,12 +1,26 @@
 # Azure Red Hat Openshift (ARO) Deployment Code / Scripts
-<u>Azure Red Hat OpenShift 3.11</u>
+**_Azure Red Hat OpenShift 3.11_**
 
 * aro-311-deploy.json
 * aro-311-deploy.json.params
+These ARM templates can be used to deploy the latest version of Azure Red Hat OpenShift 3.11. Support for the following has been added based on customer demand:
 ```
-Text
+* Peering of Azure vnets / enablement of VPN connectivity / Private clusters
+* Integration with Azure Monitoring to provide container application metrics
 ```
-**__Azure Red Hat OpenShift 4.3__**
+To deploy ARO 3.11 you will need to execute the following commands using the Azure Linux CLI, or clicking on the link below:
+```
+* az group create -n <resourcegroup> -l <azuredatacenter>
+* az group deployment create -n <resourcegroup> --template-file aro-311-deploy.json --parameters aro-311-deploy.json.params
+```
+
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjmo808%2farm-aro43%2fmaster%2Fazuredeploy.json" target="_blank">
+<img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
+</a>
+
+<hr>
+
+**_Azure Red Hat OpenShift 4.3_**
 
 * aro43-build.sh
 
