@@ -41,7 +41,7 @@ A video instruction/webinar series will be created on the following ARO topics. 
 
 * Pre-requisites (registering the ARO extension in the CLI until it GA’s as part of it) and deployment of ARO
 * Logging in to the console and demonstrating the difference between public / private clusters
-* Connecting Azure Advice Directory to ARO 4.3
+* Connecting Azure Active Directory to ARO 4.3
 * Creating an ARO 4.3 project and assigning cluster admin rights to users
 * Migration of OpenShift 3.11 / ARO 3.11 projects to ARO 4.3
 * Integrating Azure Arc with ARO 4.3
