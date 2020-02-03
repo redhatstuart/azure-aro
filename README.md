@@ -6,7 +6,7 @@
 ```
 Text
 ```
-**_Azure Red Hat OpenShift 4.3_**
+**__Azure Red Hat OpenShift 4.3__**
 
 * aro43-build.sh
 
