@@ -1,6 +1,6 @@
 # Azure Red Hat Openshift (ARO) Deployment Code / Scripts
 
-##Azure Red Hat OpenShift 3.11
+## Azure Red Hat OpenShift 3.11
 
 * aro-311-deploy.json
 * aro-311-deploy.json.params
@@ -22,7 +22,7 @@ To deploy ARO 3.11 you will need to customize the parameters file per your Azure
 
 <hr>
 
-##Azure Red Hat OpenShift 4.3
+## Azure Red Hat OpenShift 4.3
 
 * aro43-build.sh
 
@@ -37,7 +37,7 @@ Subsequently, connecting ARO to Azure Active Directory is no longer automated. T
 
 <hr>
 
-##Video/Training Series
+## Video/Training Series
 A video instruction/webinar series will be created on the following ARO topics. If you have additional ideas for content, please contact: stkirk@microsoft.com
 
 * Pre-requisites (registering the ARO extension in the CLI until it GA’s as part of it) and deployment of ARO
