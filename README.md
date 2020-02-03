@@ -27,13 +27,12 @@ To deploy ARO 3.11 you will need to customize the parameters file per your Azure
 * aro43-build.sh
 
 This script will deploy Azure Red Hat OpenShift 4.3 and create the necessary group/network infrastructure required. The process takes roughly 35 minutes. Until the 'az aro' command becomes GA within the Azure Linux CLI, you must register the extension using the instructions located here:
-```
+
 * <a href="https://github.com/Azure/ARO-RP/blob/master/docs/using-az-aro.md">blah</a>
-```
+
 Subsequently, connecting ARO to Azure Active Directory is no longer automated. The process for doing this can be found here:
-```
+
 * [https://github.com/jmo808/arm-aro43](https://github.com/jmo808/arm-aro43)
-```
 
 <hr>
 
