@@ -80,11 +80,6 @@ echo "$APIPRIVACY Console URL"
 echo "-------------------"
 echo "`az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.consoleProfile.url'`"
 
-echo " "
-echo "Procedure for connecting ARO to AAD"
-echo "-----------------------------------"
-echo "https://github.com/jmo808/arm-aro43"
-
 echo " " 
 echo "Redirect URI to enter into AAD Service Principal"
 echo "------------------------------------------------"
