@@ -1,4 +1,4 @@
-#!/bin/bash 
+#!/bin/bash -e
 
 # Written by Stuart Kirk
 # stuart.kirk@microsoft.com
