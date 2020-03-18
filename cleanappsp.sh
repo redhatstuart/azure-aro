@@ -9,6 +9,10 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# Erases all Azure AD Apps and Service Principals that start with "aro-".
+# This is useful when clusters are stood up / torn down with frequency to keep AAD clean.
+# Note: This script will delete *all* Azure AD Apps and Service Principals, without confirmation, with the "aro-" prefix. All others will remain.
+
 for i in `az ad app list --show-mine -o json | jq -r ".[] | .displayName" |grep "aro-"`; do az ad app list --display-name $i -o json | jq -r ".[] | .objectId"; done > appids
 
 for i in `cat appids`; do
@@ -19,7 +23,7 @@ done
 for j in `az ad sp list --show-mine -o json | jq -r ".[] | .displayName" |grep "aro-"`; do az ad sp list --display-name $i -o json | jq -r ".[] | .objectId"; done > spids
 
 for j in `cat spids`; do
-  echo "Errasing sp: $j"
+  echo "Erasing sp: $j"
   az ad sp delete --id $j
 done
 
