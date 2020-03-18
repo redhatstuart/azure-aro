@@ -1,7 +1,7 @@
 #!/bin/bash -e
 
-# Written by Stuart Kirk
-# stuart.kirk@microsoft.com
+# Written by Stuart Kirk with significant content from Jules Ouellette & Ahmed Sabbour
+# stuart.kirk@microsoft.com, jules.ouellette@microsoft.com, asabbour@microsoft.com
 #
 # THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING BUT
 # NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT.
@@ -83,7 +83,8 @@ oc login -u kubeadmin -p $kubePW --server $apiServer
 echo "done."
 
 ########## Create ARO openID authentication secrets file
-echo -n "Creating ARO openID authentication secrets file..."
+echo " "
+echo "Creating ARO openID authentication secrets file..."
 oc create secret generic openid-client-secret-azuread -n openshift-config --from-literal=clientSecret=$clientSecret
 echo "done."
 
@@ -119,7 +120,8 @@ EOF
 echo "done."
 
 ########## Apply configuration and force replication
-echo -n "Applying reviesed authentication provider configuration to OpenShift and forcing replication update..."
+echo " "
+echo "Applying reviesed authentication provider configuration to OpenShift and forcing replication update..."
 oc replace -f oidc.yaml
 oc create secret generic openid-client-secret-azuread --from-literal=clientSecret=$clientSecret --dry-run -o yaml | oc replace -n openshift-config -f -
 echo "done."
