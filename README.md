@@ -25,7 +25,7 @@ To deploy ARO 3.11 you will need to customize the parameters file per your Azure
 ## Azure Red Hat OpenShift 4.x
 
 ### aro-build.sh
-
+<hr>
 This script will deploy Azure Red Hat OpenShift 4.x and create the necessary group/network infrastructure required. The process takes roughly 35 minutes. Until the 'az aro' command becomes GA within the Azure Linux CLI, you must ensure your Azure CLI has the extension included: **az extension add -n aro --index https://az.aroapp.io/preview** and continue to keep it updated: **az extension update -n aro --index https://az.aroapp.io/preview**
 
 The usage is as follows:
@@ -39,11 +39,11 @@ Notes:
 * The nameservers for **blah.foo.com** will be provided by the script during build.
 
 ### aro43-aad-connect.sh
-
+<hr>
 This script will connect Azure Red Hat OpenShift to Azure Active Directory. It will create a new Azure Application & Service Principal within AAD and subsequently configure an OAuth based Authentication Provider to bind to it using the subscription and tenant which are active when the script is run.
 
 ### cleanappsp.sh
-
+<hr>
 This script is a housekeeping script that deletes all Azure Active Directory applications and service principals with an **aro-** prefix. It is particularly useful when standing up / tearing down multiple ARO clusters.
 
 <hr>
