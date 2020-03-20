@@ -16,7 +16,7 @@ To deploy ARO 3.11 you will need to customize the parameters file per your Azure
 * az group deployment create -g <resourcegroup> --template-file aro-311-deploy.json --parameters aro-311-deploy.params.json
 ```
 
-<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjmo808%2farm-aro43%2fmaster%2Fazuredeploy.json" target="_blank">
+<a href="https://portal.azure.com/#create/Microsoft.Template/uri/https%3A%2F%2Fraw.githubusercontent.com%2Fjmo808%2farm-aro43%2fmasteru%2Fazuredeploy.json" target="_blank">
 <img src="https://raw.githubusercontent.com/Azure/azure-quickstart-templates/master/1-CONTRIBUTION-GUIDE/images/deploytoazure.png"/>
 </a>
 
@@ -38,13 +38,20 @@ Notes:
 * The build script will look for the DNS Zone and A records for the custom domain. If either don't exist, it will create the zone and/or associated A records.
 * Using the example above, it will be your responsibility to create an NS record from the **foo.com** zone to point to **blah.foo.com**. The nameservers for **blah.foo.com** will be provided by the script during build.
 <hr>
-<h3> aro43-aad-connect.sh</h3>
+<h3> aro-aad-connect.sh</h3>
 <hr>
 This script will connect Azure Red Hat OpenShift to Azure Active Directory. It will create a new Azure Application & Service Principal within AAD and subsequently configure an OAuth based Authentication Provider to bind to it using the subscription and tenant which are active when the script is run.
+
+The usage is as follows:<br>
+<strong>./aro-aad-connect.sh (ARO Cluster Name) (ARO Resource Group Name)<br>
 <hr>
 <h3>cleanappsp.sh</h3>
 <hr>
-This script is a housekeeping script that deletes all Azure Active Directory applications and service principals with an **aro-** prefix. It is particularly useful when standing up / tearing down multiple ARO clusters.
+
+This script is a housekeeping script that mercilessly deletes all Azure Active Directory applications and service principals with an <strong>aro-</strong> prefix. It is particularly useful when standing up / tearing down multiple ARO clusters.
+
+The usage is as follows:<br>
+<strong>./cleanappsp.sh</strong>
 
 <hr>
 
