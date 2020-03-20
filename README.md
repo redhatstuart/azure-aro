@@ -36,8 +36,7 @@ The usage is as follows:<br>
 Notes:
 * Custom domains will error on an invalid SSL certificate since the certificate is self-signed. You will need to upload a signed SSL certficate for your domain to address this.
 * The build script will look for the DNS Zone and A records for the custom domain. If either don't exist, it will create the zone and/or associated A records.
-* Using the example above, it will be your responsibility to create an NS record from the **foo.com** zone to point to **blah.foo.com**.
-* The nameservers for **blah.foo.com** will be provided by the script during build.
+* Using the example above, it will be your responsibility to create an NS record from the **foo.com** zone to point to **blah.foo.com**. The nameservers for **blah.foo.com** will be provided by the script during build.
 <hr>
 <h3> aro43-aad-connect.sh</h3>
 <hr>
