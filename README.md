@@ -27,6 +27,7 @@ To deploy ARO 3.11 you will need to customize the parameters file per your Azure
 ### aro-build.sh
 <hr>
 This script will deploy Azure Red Hat OpenShift 4.x and create the necessary group/network infrastructure required. The process takes roughly 35 minutes. Until the 'az aro' command becomes GA within the Azure Linux CLI, you must ensure your Azure CLI has the extension included: **az extension add -n aro --index https://az.aroapp.io/preview** and continue to keep it updated: **az extension update -n aro --index https://az.aroapp.io/preview**
+<br>
 
 The usage is as follows:<br>
 **./aro-build.sh** to create an ARO 4.x cluster with a standard aroapp.io domain.<br>
