@@ -22,11 +22,21 @@ To deploy ARO 3.11 you will need to customize the parameters file per your Azure
 
 <hr>
 
-## Azure Red Hat OpenShift 4.3
+## Azure Red Hat OpenShift 4.x
 
-* aro43-build.sh
+* aro-build.sh
 
-This script will deploy Azure Red Hat OpenShift 4.3 and create the necessary group/network infrastructure required. The process takes roughly 35 minutes. Until the 'az aro' command becomes GA within the Azure Linux CLI, you must ensure your Azure CLI has the extension included: **az extension add -n aro --indexi https://az.aroapp.io/preview** and continue to keep it updated: **az extension update -n aro --index https://az.aroapp.io/preview**
+This script will deploy Azure Red Hat OpenShift 4.x and create the necessary group/network infrastructure required. The process takes roughly 35 minutes. Until the 'az aro' command becomes GA within the Azure Linux CLI, you must ensure your Azure CLI has the extension included: **az extension add -n aro --index https://az.aroapp.io/preview** and continue to keep it updated: **az extension update -n aro --index https://az.aroapp.io/preview**
+
+The usage is as follows:
+**./aro-build.sh** to create an ARO 4.x cluster with a standard aroapp.io domain.
+**./aro-build.sh blah.foo.com** to create an ARO 4.x cluster with a custom domain of blah.foo.com
+
+Notes:
+* Custom domains will error on an invalid SSL certificate since it is self-signed. You will need to upload a signed SSL cert for your domain to address this.
+* The build script will look for the DNS Zone i and A records for the custom domain. If either don't exist, it will create the zone and/or associated A records.
+* Using the example above, it will be your responsibility to create an NS record from the **foo.com** zone to point to **blah.foo.com**.
+* The nameservers for **blah.foo.com** will be provided by the script during build.
 
 * aro43-aad-connect.sh
 
