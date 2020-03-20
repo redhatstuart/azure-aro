@@ -41,9 +41,9 @@ Notes:
 <h3> aro-aad-connect.sh</h3>
 <hr>
 This script will connect Azure Red Hat OpenShift to Azure Active Directory. It will create a new Azure Application & Service Principal within AAD and subsequently configure an OAuth based Authentication Provider to bind to it using the subscription and tenant which are active when the script is run.
-
+<br><br>
 The usage is as follows:<br>
-<strong>./aro-aad-connect.sh (ARO Cluster Name) (ARO Resource Group Name)<br>
+<strong>./aro-aad-connect.sh (ARO Cluster Name) (ARO Resource Group Name)</strong><br>
 <hr>
 <h3>cleanappsp.sh</h3>
 <hr>
