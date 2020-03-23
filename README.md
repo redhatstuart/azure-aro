@@ -24,26 +24,26 @@ To deploy ARO 3.11 you will need to customize the parameters file per your Azure
 
 ## Azure Red Hat OpenShift 4.x
 
-<h3>aro-build.sh</h3>
+<h3>aro4-build.sh</h3>
 <hr>
 This script will deploy Azure Red Hat OpenShift 4.x and create the necessary group/network infrastructure required. The process takes roughly 35 minutes. Until the 'az aro' command becomes GA within the Azure Linux CLI, you must ensure your Azure CLI has the extension included: <strong>az extension add -n aro --index https://az.aroapp.io/preview</strong> and continue to keep it updated: <strong>az extension update -n aro --index https://az.aroapp.io/preview</strong>
 <br><br>
 
 The usage is as follows:<br>
-**./aro-build.sh** to create an ARO 4.x cluster with a standard aroapp.io domain.<br>
-**./aro-build.sh blah.foo.com** to create an ARO 4.x cluster with a custom domain of blah.foo.com
+**./aro4-build.sh** to create an ARO 4.x cluster with a standard aroapp.io domain.<br>
+**./aro4-build.sh blah.foo.com** to create an ARO 4.x cluster with a custom domain of blah.foo.com
 
 Notes:
 * Custom domains will error on an invalid SSL certificate since the certificate is self-signed. You will need to upload a signed SSL certificate for your domain to address this.
 * The build script will look for the DNS Zone and A records for the custom domain. If either don't exist, it will create the zone and/or associated A records.
 * Using the example above, it will be your responsibility to create an NS record from the **foo.com** zone to point to **blah.foo.com**. The nameservers for **blah.foo.com** will be provided by the script during build.
 <hr>
-<h3> aro-aad-connect.sh</h3>
+<h3> aro4-aad-connect.sh</h3>
 <hr>
-This script will connect Azure Red Hat OpenShift to Azure Active Directory. It will create a new Azure Application & Service Principal within AAD and subsequently configure an OAuth based Authentication Provider to bind to it using the subscription and tenant which are active when the script is run.
+This script will connect Azure Red Hat OpenShift to Azure Active Directory. It will create a new Azure Application & Service Principal within AAD and subsequently configure an OAuth based Authentication Provider to bind to it using the subscription and tenant which are active when the script is run. The script is compatible with standard "aroapp.io" deployments and custom domains.
 <br><br>
 The usage is as follows:<br>
-<strong>./aro-aad-connect.sh (ARO Cluster Name) (ARO Resource Group Name)</strong><br>
+<strong>./aro4-aad-connect.sh (ARO Cluster Name) (ARO Resource Group Name)</strong><br>
 <hr>
 <h3>cleanappsp.sh</h3>
 <hr>

@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # Written by Stuart Kirk with significant content from Jules Ouellette & Ahmed Sabbour
 # stuart.kirk@microsoft.com, jules.ouellette@microsoft.com, asabbour@microsoft.com
@@ -19,6 +19,7 @@ if [ $# -ne 2 ]; then
 fi
 
 echo "I will attempt to connect Azure Red Hat OpenShift to Azure Active Directory."
+echo "*** Please note if your ARO cluster uses a custom domain, the console and app addresses must resolve prior to running this script ***"
 echo "ARO Cluster Name: $1"
 echo "ARO Resource Group Name: $2"
 echo "Shall I continue?" 
@@ -34,14 +35,31 @@ done
 
 ########## Set Variables
 echo -n "Obtaining the variables I need..."
-export aroName="$1"
-export aroRG="$2"
-export domain="$(az aro show -g $aroRG -n $aroName --query clusterProfile.domain -o tsv 2> /dev/null)"
-export location="$(az aro show -g $aroRG -n $aroName --query location -o tsv  2> /dev/null)"
-export apiServer="$(az aro show -g $aroRG -n $aroName --query apiserverProfile.url -o tsv  2> /dev/null)"
-export webConsole="$(az aro show -g $aroRG -n $aroName --query consoleProfile.url -o tsv  2> /dev/null)"
-export oauthCallbackURL="https://oauth-openshift.apps.$domain.$location.aroapp.io/oauth2callback/AAD"
-export clientSecret="`cat /dev/urandom | tr -dc 'a-zA-Z0-9@#$%^&*–_!+={}|\?~()]' | fold -w 16 | grep -i '[@#$%^&*–_!+={}|\?~()]' | head -n 1`"
+aroName="$1"
+export aroName
+aroRG="$2"
+export aroRG
+domain="$(az aro show -g $aroRG -n $aroName -o json 2>/dev/null |jq -r '.clusterProfile.resourceGroupId' | cut -f5 -d/ |cut -f2 -d-)"
+export domain
+location="$(az aro show -g $aroRG -n $aroName --query location -o tsv  2> /dev/null)"
+export location
+dns="$(az aro show -g $aroRG -n $aroName -o json 2>/dev/null |jq -r '.clusterProfile.domain')"
+export dns
+apiServer="$(az aro show -g $aroRG -n $aroName --query apiserverProfile.url -o tsv  2> /dev/null)"
+export apiServer
+webConsole="$(az aro show -g $aroRG -n $aroName --query consoleProfile.url -o tsv  2> /dev/null)"
+export webConsole
+clientSecret="1`cat /dev/urandom | tr -dc 'a-zA-Z0-9@#$%^&*–_!+={}|\?~()]' | fold -w 16 | grep -i '[@#$%^&*–_!+={}|\?~()]' | head -n 1`"
+export clientSecret
+consoleUrl=$(az aro show -g $aroRG -n $aroName -o json 2>/dev/null |jq -r '.consoleProfile.url')
+export consoleUrl
+if [ -n "$(echo $consoleUrl | grep aroapp.io)" ]; then
+  oauthCallbackURL="https://oauth-openshift.apps.$domain.$location.aroapp.io/oauth2callback/AAD"
+  export oauthCallbackURL
+else
+  oauthCallbackURL="https://oauth-openshift.apps.$dns/oauth2callback/AAD"
+  export oauthCallbackURL
+fi
 echo "done."
 
 ########## Create Manifest
@@ -70,7 +88,7 @@ echo "done."
 
 ########## Generate and configure SP
 echo -n "Configuring Azure Application & Service Principal..."
-appId=$(az ad app create --query appId -o tsv --display-name aro-auth-`whoami`-`echo $RANDOM | tr '[0-9]' '[a-z]'` --reply-urls $oauthCallbackURL --password $clientSecret 2> /dev/null)
+appId=$(az ad app create --query appId -o tsv --display-name aro-$domain-aad-connector --reply-urls $oauthCallbackURL --password $clientSecret 2> /dev/null)
 tenantId=$(az account show --query tenantId -o tsv 2> /dev/null)
 az ad app update --set optionalClaims.idToken=@manifest.json --id $appId
 az ad app permission add --api 00000002-0000-0000-c000-000000000000 --api-permissions 311a71cc-e848-46a1-bdf8-97ff7156d8e6=Scope --id $appId 2> /dev/null
@@ -79,7 +97,7 @@ echo "done."
 ########## Obtain PW and login to ARO CLI
 echo -n "Obtaining ARO login credentials for kubeadmin user..."
 kubePW=$(az aro list-credentials -n $aroName -g $aroRG -o tsv 2> /dev/null | awk '{print $1}') 
-oc login -u kubeadmin -p $kubePW --server $apiServer
+oc login -u kubeadmin -p $kubePW --server $apiServer --insecure-skip-tls-verify=true
 echo "done."
 
 ########## Create ARO openID authentication secrets file
@@ -121,7 +139,7 @@ echo "done."
 
 ########## Apply configuration and force replication
 echo " "
-echo "Applying reviesed authentication provider configuration to OpenShift and forcing replication update..."
+echo "Applying revised authentication provider configuration to OpenShift and forcing replication update..."
 oc replace -f oidc.yaml
 oc create secret generic openid-client-secret-azuread --from-literal=clientSecret=$clientSecret --dry-run -o yaml | oc replace -n openshift-config -f -
 echo "done."
