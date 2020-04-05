@@ -34,6 +34,7 @@ The usage is as follows:<br>
 **./aro4-build.sh blah.foo.com** to create an ARO 4.x cluster with a custom domain of blah.foo.com
 
 Notes:
+* This script now supports Red Hat Cloud Access pull secrets. Just save your pull secret in a file called "pull-secret.txt" in the same directory in which you invoke this script.
 * Custom domains will error on an invalid SSL certificate since the certificate is self-signed. You will need to upload a signed SSL certificate for your domain to address this.
 * The build script will look for the DNS Zone and A records for the custom domain. If either don't exist, it will create the zone and/or associated A records.
 * Using the example above, it will be your responsibility to create an NS record from the **foo.com** zone to point to **blah.foo.com**. The nameservers for **blah.foo.com** will be provided by the script during build.

@@ -92,8 +92,22 @@ echo "done"
 echo -n "Adding ARO RP Contributor access to VNET..."
 az role assignment create --scope /subscriptions/$SUBID/resourceGroups/$RESOURCEGROUP/providers/Microsoft.Network/virtualNetworks/$VNET_NAME --assignee f1dd0a37-89c6-4e07-bcd1-ffd3d43d8875 --role "Contributor" > /dev/null
 echo "done"
-echo " "
 
+# Pull Secret
+echo -n "Checking if pull-secret.txt exists..."
+if [ -f "pull-secret.txt" ]; then
+    echo "detected"
+    echo -n "Removing extra characters from pull-secret.txt..."
+    tr -d "\n\r" < pull-secret.txt >pull-secret.tmp
+    rm -f pull-secret.txt
+    mv pull-secret.tmp pull-secret.txt
+    echo "done"
+    PULLSECRET="--pull-secret=$(cat pull-secret.txt)"
+    export PULLSECRET
+else
+    echo "not detected."
+fi
+echo " "
 
 ################################################################################################## Build ARO
 
@@ -103,9 +117,9 @@ echo "==========================================================================
 echo "Building Azure Red Hat OpenShift - this takes roughly 30-40 minutes. The time is now: $(date)..."
 echo " "
 echo "Executing: "
-echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --vnet=$VNET_NAME --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS $DNS"
+echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --vnet=$VNET_NAME --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS $DNS $PULLSECRET"
 echo " "
-time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --vnet="$VNET_NAME" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" $DNS
+time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --vnet="$VNET_NAME" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" $DNS $PULLSECRET
 
 
 ################################################################################################## Post Provisioning
