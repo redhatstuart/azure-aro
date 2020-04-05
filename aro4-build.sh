@@ -1,4 +1,4 @@
-#!/bin/bash -e
+#!/bin/bash
 
 # Written by Stuart Kirk
 # stuart.kirk@microsoft.com
@@ -128,11 +128,11 @@ time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --vnet="$VNET_NAME" --maste
 # Update ARO RG tags
 echo " "
 echo -n "Updating resource group tags..."
-DOMAIN="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.clusterProfile.resourceGroupId' | cut -f5 -d/ |cut -f2 -d-)"
+DOMAIN="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.clusterProfile.domain')"
 export DOMAIN
 VERSION="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.clusterProfile.version')"
 export VERSION
-az group update -g "aro-$DOMAIN" --tags "ARO $VERSION Build Date=$BUILDDATE" >> /dev/null 2>&1
+#az group update -g "aro-$DOMAIN" --tags "ARO $VERSION Build Date=$BUILDDATE" >> /dev/null 2>&1
 az group update -g "$RESOURCEGROUP" --tags "ARO $VERSION Build Date=$BUILDDATE" >> /dev/null 2>&1
 echo "done."
 
