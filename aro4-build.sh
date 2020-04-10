@@ -178,6 +178,11 @@ echo "-------------------"
 echo "$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.consoleProfile.url')"
 
 echo " "
+echo "$APIPRIVACY API URL"
+echo "-------------------"
+echo "$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.apiserverProfile.url')"
+
+echo " "
 echo "To delete this ARO Cluster"
 echo "--------------------------"
 echo "az aro delete -n $CLUSTER -g $RESOURCEGROUP -y ; az group delete -n $RESOURCEGROUP -y"
