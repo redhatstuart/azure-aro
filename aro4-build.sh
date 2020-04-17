@@ -117,9 +117,9 @@ echo "==========================================================================
 echo "Building Azure Red Hat OpenShift - this takes roughly 30-40 minutes. The time is now: $(date)..."
 echo " "
 echo "Executing: "
-echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --vnet=$VNET_NAME --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS $DNS $PULLSECRET"
+echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --cluster-resource-group $RESOURCEGROUP-cluster --vnet=$VNET_NAME --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS $DNS $PULLSECRET"
 echo " "
-time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --vnet="$VNET_NAME" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" $DNS $PULLSECRET
+time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group $RESOURCEGROUP-cluster --vnet="$VNET_NAME" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" $DNS $PULLSECRET
 
 
 ################################################################################################## Post Provisioning
