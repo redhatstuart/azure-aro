@@ -61,8 +61,8 @@ echo "Building Azure Red Hat OpenShift"
 echo "--------------------------------"
 
 if [ $# -eq 1 ]; then
-    DNS="--domain=$1"
-    export DNS
+    CUSTOMDNS="--domain=$1"
+    export CUSTOMDNS
     echo "You have specified a parameter for a custom domain: $1. I will configure ARO to use this domain."
     echo " "
 fi
@@ -117,9 +117,9 @@ echo "==========================================================================
 echo "Building Azure Red Hat OpenShift - this takes roughly 30-40 minutes. The time is now: $(date)..."
 echo " "
 echo "Executing: "
-echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --cluster-resource-group $RESOURCEGROUP-cluster --vnet=$VNET_NAME --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS $DNS $PULLSECRET"
+echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --cluster-resource-group $RESOURCEGROUP-cluster --vnet=$VNET_NAME --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS $CUSTOMDNS $PULLSECRET"
 echo " "
-time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group $RESOURCEGROUP-cluster --vnet="$VNET_NAME" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" $DNS $PULLSECRET
+time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group $RESOURCEGROUP-cluster --vnet="$VNET_NAME" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" $CUSTOMDNS $PULLSECRET
 
 
 ################################################################################################## Post Provisioning
@@ -132,13 +132,12 @@ DOMAIN="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '
 export DOMAIN
 VERSION="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.clusterProfile.version')"
 export VERSION
-#az group update -g "aro-$DOMAIN" --tags "ARO $VERSION Build Date=$BUILDDATE" >> /dev/null 2>&1
 az group update -g "$RESOURCEGROUP" --tags "ARO $VERSION Build Date=$BUILDDATE" >> /dev/null 2>&1
 echo "done."
 
 # Forward Zone Creation (if necessary)
-if [ -n "$DNS" ]; then
-    DNS="$(echo $DNS | cut -f2 -d=)"
+if [ -n "$CUSTOMDNS" ]; then
+    DNS="$(echo $CUSTOMDNS | cut -f2 -d=)"
     export DNS
     if [ -z "$(az network dns zone list -o json | jq -r '.[] | .name' | grep $DNS)" ]; then
         echo -n "Zone $DNS not detected. Creating..."
@@ -146,21 +145,23 @@ if [ -n "$DNS" ]; then
         echo "done." 
         echo " "
         echo "Dumping nameservers for newly created zone..." 
-        az network dns zone show -g $RESOURCEGROUP -n $DNS -o json | jq -r '.nameServers[]'
+        az network dns zone show -g $DNSRG -n $RESOURCEGROUP -o json | jq -r '.nameServers[]'
         echo " "
     fi
-    if [ -z "$(az network dns record-set list -g $RESOURCEGROUP -z $DNS |grep api)" ]; then
+    DNSRG="$(az network dns zone list |grep $DNS | awk '{print $2}')"
+    export DNSRG
+    if [ -z "$(az network dns record-set list -g $DNSRG -z $DNS |grep api)" ]; then
         echo -n "An A record for the ARO API does not exist. Creating..." 
         IPAPI="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null | jq -r '.apiserverProfile.ip')"
 	export IPAPI
-	az network dns record-set a add-record -z $DNS -g $RESOURCEGROUP -a $IPAPI -n api >> /dev/null 2>&1
+	az network dns record-set a add-record -z $DNS -g $DNSRG -a $IPAPI -n api >> /dev/null 2>&1
         echo "done."
     fi
-    if [ -z "$(az network dns record-set list -g $RESOURCEGROUP -z $DNS |grep apps)" ]; then
+    if [ -z "$(az network dns record-set list -g $DNSRG -z $DNS |grep apps)" ]; then
         echo -n "A wildcard A record for ARO applications does not exist. Creating..."
         IPAPPS="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null | jq -r '.ingressProfiles[0] .ip')"
 	export IPAPPS
-        az network dns record-set a add-record -z $DNS -g $RESOURCEGROUP -a $IPAPPS -n *.apps >> /dev/null 2>&1
+        az network dns record-set a add-record -z $DNS -g $DNSRG -a $IPAPPS -n *.apps >> /dev/null 2>&1
         echo "done."
     fi
 fi
