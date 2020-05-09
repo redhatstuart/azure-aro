@@ -33,6 +33,17 @@ The usage is as follows:<br>
 <strong>./cleanappsp.sh</strong>
 
 <hr>
+<h3>aro4-replace-pull-secret.sh</h3>
+<hr>
+This script will allow you to replace the global pull secret currently existing on your ARO cluster.<br><br>
+<u>Pre-requisites:</u>
+<ul>
+<li>Logged in a cluster-admin user (kubeadmin)</li>
+<li>Obtain a revised pull secret (ex. from cloud.redhat.com)</li>
+</ul>
+
+The usage is as follows:<br>
+<strong>./aro4-replace-pull-secret.sh filename-of-pull-secret.json</strong>
 
 ## Azure Red Hat OpenShift 3.11
 
