@@ -43,7 +43,7 @@ This script will allow you to replace the global pull secret currently existing 
 </ul>
 
 The usage is as follows:<br>
-<strong>./aro4-replace-pull-secret.sh (filename-of-pull-secret.json)</strong><br>
+<strong>./aro4-replace-pull-secret.sh (filename-of-pull-secret.json)</strong><br><br>
 Note: This script assumes that you are logged in as kubeadmin - if you have created a new cluster-admin user, you will need to change the script to reflect this. Your cluster will also become unavailable for several minutes while the revised pull-secret is propogated across all nodes.
 <br>
 
