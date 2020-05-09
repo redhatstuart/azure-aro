@@ -36,14 +36,18 @@ The usage is as follows:<br>
 <h3>aro4-replace-pull-secret.sh</h3>
 <hr>
 This script will allow you to replace the global pull secret currently existing on your ARO cluster.<br><br>
-<u>Pre-requisites:</u>
+<strong>Pre-requisites:</strong>
 <ul>
-<li>Logged in a cluster-admin user (kubeadmin)</li>
-<li>Obtain a revised pull secret (ex. from cloud.redhat.com)</li>
+<li>Logged in a cluster-admin user (kubeadmin) with oc</li>
+<li>Obtain a revised pull secret (ex. from cloud.redhat.com) and save to a text file</li>
 </ul>
 
 The usage is as follows:<br>
-<strong>./aro4-replace-pull-secret.sh filename-of-pull-secret.json</strong>
+<strong>./aro4-replace-pull-secret.sh filename-of-pull-secret.json</strong><br>
+Note: This script assumes that you are logged in as kubeadmin - if you have created a new cluster-admin user, you will need to change the script to reflect this. Your cluster will also become unavailable for several minutes while the revised pull-secret is propogated across all nodes.
+<br>
+
+<hr>
 
 ## Azure Red Hat OpenShift 3.11
 
