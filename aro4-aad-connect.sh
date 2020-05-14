@@ -37,22 +37,31 @@ done
 echo -n "Obtaining the variables I need..."
 aroName="$1"
 export aroName
+echo -n "aroName, "
 aroRG="$2"
 export aroRG
-domain="$(az aro show -g $aroRG -n $aroName -o json 2>/dev/null |jq -r '.clusterProfile.resourceGroupId' | cut -f5 -d/ |cut -f2 -d-)"
-export domain
+echo -n "aroRG, "
+dns="$(az aro show -g $aroRG -n $aroName -o json 2>/dev/null |jq -r '.clusterProfile.resourceGroupId' | cut -f5 -d/ |cut -f2 -d-)"
+export dns
+echo -n "dns, "
 location="$(az aro show -g $aroRG -n $aroName --query location -o tsv  2> /dev/null)"
 export location
-dns="$(az aro show -g $aroRG -n $aroName -o json 2>/dev/null |jq -r '.clusterProfile.domain')"
-export dns
+echo -n "location, "
+domain="$(az aro show -g $aroRG -n $aroName -o json 2>/dev/null |jq -r '.clusterProfile.domain')"
+export domain
+echo -n "domain, "
 apiServer="$(az aro show -g $aroRG -n $aroName --query apiserverProfile.url -o tsv  2> /dev/null)"
 export apiServer
+echo -n "apiServer, "
 webConsole="$(az aro show -g $aroRG -n $aroName --query consoleProfile.url -o tsv  2> /dev/null)"
 export webConsole
+echo -n "webConsole, "
 clientSecret="1`cat /dev/urandom | tr -dc 'a-zA-Z0-9@#$%^&*–_!+={}|\?~()]' | fold -w 16 | grep -i '[@#$%^&*–_!+={}|\?~()]' | head -n 1`"
 export clientSecret
+echo -n "clientSecret, "
 consoleUrl=$(az aro show -g $aroRG -n $aroName -o json 2>/dev/null |jq -r '.consoleProfile.url')
 export consoleUrl
+echo -n "consoleUrl, "
 if [ -n "$(echo $consoleUrl | grep aroapp.io)" ]; then
   oauthCallbackURL="https://oauth-openshift.apps.$domain.$location.aroapp.io/oauth2callback/AAD"
   export oauthCallbackURL
@@ -60,6 +69,7 @@ else
   oauthCallbackURL="https://oauth-openshift.apps.$dns/oauth2callback/AAD"
   export oauthCallbackURL
 fi
+echo -n "oauthCallbackURL..."
 echo "done."
 
 ########## Create Manifest
