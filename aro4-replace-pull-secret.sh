@@ -9,6 +9,10 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
+# Variable List
+CLUSTER_ADMIN="kube:admin"
+export CLUSTER_ADMIN
+
 echo " "
 echo "Replacing Azure Red Hat OpenShift Pull Secret"
 echo "---------------------------------------------"
@@ -24,8 +28,8 @@ if [ ! -f "$1" ]; then
 fi
 
 # We should be logged in now as a cluster admin
-if [ "$(oc whoami 2> /dev/null)" != "kube:admin" ]; then
-   echo "Please login as kubeadmin."
+if [ "$(oc whoami 2> /dev/null)" != "$CLUSTER_ADMIN" ]; then
+   echo "Please login as $CLUSTER_ADMIN."
    exit 1
 fi
 
