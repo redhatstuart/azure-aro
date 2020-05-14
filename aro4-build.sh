@@ -83,6 +83,7 @@ if [ -z "$(az extension list -o table |grep aro)" ]; then
         "error! Unable to add the Azure CLI extension for ARO. Please remediate this."
         exit 1
     fi
+    echo "done."
 fi
 
 echo -n "Updating the Azure CLI extension to the latest version (if required)..."
