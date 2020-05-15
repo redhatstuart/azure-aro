@@ -60,18 +60,18 @@ echo " "
 echo "Building Azure Red Hat OpenShift 4"
 echo "----------------------------------"
 
-if [ -n "$(az provider list -o table | grep Microsoft.RedHatOpenShift | grep NotRegistered)" ]; then
+if [ -n "$(az provider show -n Microsoft.RedHatOpenShift -o table | grep -E '(Unregistered|NotRegistered)')" ]; then
     echo "The ARO resource provider has not been registered for your subscription $SUBID."
     echo -n "I will attempt to register the ARO RP now (this may take a few minutes)..."
     az provider register -n Microsoft.RedHatOpenShift --wait > /dev/null
     echo "done."
     echo -n "Verifying the ARO RP is registered..."
-    if [ -n "$(az provider list -o table | grep Microsoft.RedHatOpenShift | grep NotRegistered)" ]; then
-        "error! Unable to register the ARO RP. Please remediate this."
+    if [ -n "$(az provider show -n Microsoft.RedHatOpenShift -o table | grep -E '(Unregistered|NotRegistered)')" ]; then
+        echo "error! Unable to register the ARO RP. Please remediate this."
         exit 1
     fi
     echo "done."
-fi    
+fi
 
 if [ -z "$(az extension list -o table |grep aro)" ]; then
     echo "The Azure CLI extension for ARO has not been installed."
@@ -80,7 +80,7 @@ if [ -z "$(az extension list -o table |grep aro)" ]; then
     echo "done."
     echo -n "Verifying the Azure CLI extension exists..."
     if [ -z "$(az extension list -o table |grep aro)" ]; then
-        "error! Unable to add the Azure CLI extension for ARO. Please remediate this."
+        echo "error! Unable to add the Azure CLI extension for ARO. Please remediate this."
         exit 1
     fi
     echo "done."
