@@ -1,13 +1,13 @@
 ---
-title: Use a customer-managed key to encrypt Azure disks in Azure Kubernetes Service (AKS)
-description: Bring your own keys (BYOK) to encrypt AKS OS and Data disks.
+title: Use a customer-managed key to encrypt Azure disks in OpenShift Container Platform in IaaS
+description: Bring your own keys (BYOK) to encrypt OCP OS and Data disks.
 services: container-service
 ms.topic: article
 ms.date: 01/12/2020
 
 ---
 
-# Bring your own keys (BYOK) with Azure disks in Azure Kubernetes Service (AKS)
+# Bring your own keys (BYOK) with Azure disks in OpenShift Container Platform in IaaS
 
 Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft-managed keys. For additional control over encryption keys, you can supply [customer-managed keys][customer-managed-keys] to use for encryption at rest for both the OS and data disks for your AKS clusters.
 
