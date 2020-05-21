@@ -1,43 +1,38 @@
 ---
 title: Use a customer-managed key to encrypt Azure disks in OpenShift Container Platform in IaaS
-description: Bring your own keys (BYOK) to encrypt OCP OS and Data disks.
+description: Bring your own keys (BYOK) to encrypt OCP Data disks.
 services: container-service
 ms.topic: article
 ms.date: 01/12/2020
 
 ---
 
-# Bring your own keys (BYOK) with Azure disks in OpenShift Container Platform in IaaS
+# Bring your own keys (BYOK) with Azure disks in Red Hat OpenShift Container Platform (IaaS)
 
-Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft-managed keys. For additional control over encryption keys, you can supply [customer-managed keys][customer-managed-keys] to use for encryption at rest for both the OS and data disks for your AKS clusters.
-
-> [!NOTE]
-> BYOK Linux and Windows based AKS clusters are available in [Azure regions][supported-regions] that support server side encryption of Azure managed disks.
+Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft-managed keys which includes OS and data disks. For additional control over encryption keys, you can supply [customer-managed keys][customer-managed-keys] to use for encryption at rest for the data disks for your OpenShift clusters.
 
 ## Before you begin
 
-* This article assumes that you are creating a *new AKS cluster*.
+* This article assumes that you have deployed OpenShift Container Platform using IaaS on Azure and not ARO.
 
 * You must enable soft delete and purge protection for *Azure Key Vault* when using Key Vault to encrypt managed disks.
 
-* You need the Azure CLI version 2.0.79 or later and the aks-preview 0.4.26 extension
-
-> [!IMPORTANT]
-> AKS preview features are self-service opt-in. Previews are provided "as-is" and "as available" and are excluded from the service level agreements and limited warranty. AKS Previews are partially covered by customer support on best effort basis. As such, these features are not meant for production use. For additional infromation, please see the following support articles:
->
-> * [AKS Support Policies](support-policies.md)
-> * [Azure Support FAQ](faq.md)
-
-## Install latest AKS CLI preview extension
-
-To use customer-managed keys, you need the *aks-preview* CLI extension version 0.4.26 or higher. Install the *aks-preview* Azure CLI extension using the [az extension add][az-extension-add] command, then check for any available updates using the [az extension update][az-extension-update] command:
+* You are logged in to your OpenShift cluster as a global cluster-admin user (kubeadmin).
 
 ```azurecli-interactive
-# Install the aks-preview extension
-az extension add --name aks-preview
+# Optionally retrieve Azure region short names for use on upcoming commands
+az account list-locations
+```
+## Declare your variables & determine your active Azure subscription
 
-# Update the extension to make sure you have the latest version installed
-az extension update --name aks-preview
+```azurecli-interactive
+azureDC="eastus"                   # The short name of the Azure Data Center you have deployed OCP in
+cryptRG="ocp-cryptRG"              # The name of the resource group to be created to manage the disk encryption set and keyvault
+desName="ocp-des"                  # Your Azure Disk Encryption Set
+vaultName="ocp-keyvault-2"         # Your Azure KeyVault
+vaultKeyName="myCustomersOCPKey"   # The name of the key to be used within your Azure KeyVault
+
+subId="$(az account list -o tsv |grep True |awk '{print $2}')"
 ```
 
 ## Create an Azure Key Vault instance
@@ -47,31 +42,26 @@ Use an Azure Key Vault instance to store your keys.  You can optionally use the 
 Create a new *resource group*, then create a new *Key Vault* instance and enable soft delete and purge protection.  Ensure you use the same region and resource group names for each command.
 
 ```azurecli-interactive
-# Optionally retrieve Azure region short names for use on upcoming commands
-az account list-locations
-```
-
-```azurecli-interactive
 # Create new resource group in a supported Azure region
-az group create -l myAzureRegionName -n myResourceGroup
+az group create -l $azureDC -n $cryptRG
 
 # Create an Azure Key Vault resource in a supported Azure region
-az keyvault create -n myKeyVaultName -g myResourceGroup -l myAzureRegionName  --enable-purge-protection true --enable-soft-delete true
+az keyvault create -n $vaultName -g $cryptRG --enable-purge-protection true --enable-soft-delete true
+
+# Create the actual key within the Azure Key Vault
+az keyvault key create --vault-name $vaultName --name $vaultKeyName --protection software
 ```
 
 ## Create an instance of a DiskEncryptionSet
-
-Replace *myKeyVaultName* with the name of your key vault.  You will also need a *key* stored in Azure Key Vault to complete the following steps.  Either store your existing Key in the Key Vault you created on the previous steps, or [generate a new key][key-vault-generate] and replace *myKeyName* below with the name of your key.
-    
 ```azurecli-interactive
 # Retrieve the Key Vault Id and store it in a variable
-keyVaultId=$(az keyvault show --name myKeyVaultName --query [id] -o tsv)
+keyVaultId=$(az keyvault show --name $vaultName --query [id] -o tsv)
 
 # Retrieve the Key Vault key URL and store it in a variable
-keyVaultKeyUrl=$(az keyvault key show --vault-name myKeyVaultName  --name myKeyName  --query [key.kid] -o tsv)
+keyVaultKeyUrl=$(az keyvault key show --vault-name $vaultName --name $vaultKeyName  --query [key.kid] -o tsv)
 
 # Create a DiskEncryptionSet
-az disk-encryption-set create -n myDiskEncryptionSetName  -l myAzureRegionName  -g myResourceGroup --source-vault $keyVaultId --key-url $keyVaultKeyUrl 
+az disk-encryption-set create -n $desName -g $cryptRG --source-vault $keyVaultId --key-url $keyVaultKeyUrl
 ```
 
 ## Grant the DiskEncryptionSet access to key vault
@@ -80,41 +70,21 @@ Use the DiskEncryptionSet and resource groups you created on the prior steps, an
 
 ```azurecli-interactive
 # Retrieve the DiskEncryptionSet value and set a variable
-desIdentity=$(az disk-encryption-set show -n myDiskEncryptionSetName  -g myResourceGroup --query [identity.principalId] -o tsv)
+desIdentity=$(az disk-encryption-set show -n $desName -g $cryptRG --query [identity.principalId] -o tsv)
 
 # Update security policy settings
-az keyvault set-policy -n myKeyVaultName -g myResourceGroup --object-id $desIdentity --key-permissions wrapkey unwrapkey get
+az keyvault set-policy -n $vaultName -g $cryptRG --object-id $desIdentity --key-permissions wrapkey unwrapkey get
 
 # Assign the reader role
 az role assignment create --assignee $desIdentity --role Reader --scope $keyVaultId
 ```
 
-## Create a new AKS cluster and encrypt the OS disk
 
-Create a **new resource group** and AKS cluster, then use your key to encrypt the OS disk. Customer-managed keys are only supported in Kubernetes versions greater than 1.17. 
 
-> [!IMPORTANT]
-> Ensure you create a new resoruce group for your AKS cluster
+## Encrypt your OCP cluster data disk
 
-```azurecli-interactive
-# Retrieve the DiskEncryptionSet value and set a variable
-diskEncryptionSetId=$(az resource show -n mydiskEncryptionSetName -g myResourceGroup --resource-type "Microsoft.Compute/diskEncryptionSets" --query [id] -o tsv)
+You can encrypt the OCP data disks with your own keys.
 
-# Create a resource group for the AKS cluster
-az group create -n myResourceGroup -l myAzureRegionName
-
-# Create the AKS cluster
-az aks create -n myAKSCluster -g myResourceGroup --node-osdisk-diskencryptionset-id $diskEncryptionSetId --kubernetes-version 1.17.0 --generate-ssh-keys
-```
-
-When new node pools are added to the cluster created above, the customer-managed key provided during the create is used to encrypt the OS disk.
-
-## Encrypt your AKS cluster data disk
-
-You can also encrypt the AKS data disks with your own keys.
-
-> [!IMPORTANT]
-> Ensure you have the proper AKS credentials. The Service principal will need to have contributor access to the resource group where the diskencryptionset is deployed. Otherwise, you will get an error suggesting that the service principal does not have permissions.
 
 ```azurecli-interactive
 # Retrieve your Azure Subscription Id from id property as shown below
