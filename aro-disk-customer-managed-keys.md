@@ -34,7 +34,7 @@ azureDC="eastus"                   # The short name of the Azure Data Center you
 cryptRG="ocp-cryptRG"              # The name of the resource group to be created to manage the Azure Disk Encryption set and KeyVault
 desName="ocp-des"                  # Your Azure Disk Encryption Set
 vaultName="ocp-keyvault-1"         # Your Azure KeyVault
-vaultKeyName="myCustomOCPKey"   # The name of the key to be used within your Azure KeyVault
+vaultKeyName="myCustomOCPKey"      # The name of the key to be used within your Azure KeyVault
 
 subId="$(az account list -o tsv |grep True |awk '{print $2}')"
 ```
@@ -104,7 +104,7 @@ encryptRGResourceId="$(az group show -n $cryptRG -o tsv --query [id])"
 ocpRGResourceId="$(az group show -n $ocpGroup -o tsv --query [id])"
 ```
 
-## Implement additinal role assignments
+## Implement additinal role assignments required for BYOK encryption
 ```azurecli-interactive
 # Assign the MSI AppID 'Reader' permission over the Disk Encryption Set & KeyVault Resource Group
 az role assignment create --assignee $ocpAppId --role Reader --scope $encryptRGResourceId
@@ -113,57 +113,42 @@ az role assignment create --assignee $ocpAppId --role Reader --scope $encryptRGR
 az role assignment create --assignee $desIdentity --role Reader --scope $ocpRGResourceId
 ```
 
-
-
 ## Encrypt your OCP cluster data disk
 
 You can encrypt the OCP data disks with your own keys.
 
+Create a file called **byok-azure-disk.yaml** that contains the following information. After you save the file, execute the 'sed' commands which follow to make the appropriate variable substitutions. If you use the Azure Cloud Shell, this file can be created using vi or nano as if working on a virtual or physical system:
 
-```azurecli-interactive
-# Retrieve your Azure Subscription Id from id property as shown below
-az account list
+## Create the k8s Storage Class to be used for encrypted disks
 ```
-
-```
-someuser@Azure:~$ az account list
-[
-  {
-    "cloudName": "AzureCloud",
-    "id": "666e66d8-1e43-4136-be25-f25bb5de5893",
-    "isDefault": true,
-    "name": "MyAzureSubscription",
-    "state": "Enabled",
-    "tenantId": "3ebbdf90-2069-4529-a1ab-7bdcb24df7cd",
-    "user": {
-      "cloudShellID": true,
-      "name": "someuser@azure.com",
-      "type": "user"
-    }
-  }
-]
-```
-
-Create a file called **byok-azure-disk.yaml** that contains the following information.  Replace myAzureSubscriptionId, myResourceGroup, and myDiskEncrptionSetName with your values, and apply the yaml.  Make sure to use the resource group where your DiskEncryptionSet is deployed.  If you use the Azure Cloud Shell, this file can be created using vi or nano as if working on a virtual or physical system:
-
-```
+cat > byok-azure-disk.yaml<< EOF
 kind: StorageClass
-apiVersion: storage.k8s.io/v1  
+apiVersion: storage.k8s.io/v1
 metadata:
-  name: hdd
+  name: encrypted-disk-des
 provisioner: kubernetes.io/azure-disk
 parameters:
   skuname: Standard_LRS
   kind: managed
-  diskEncryptionSetID: "/subscriptions/{myAzureSubscriptionId}/resourceGroups/{myResourceGroup}/providers/Microsoft.Compute/diskEncryptionSets/{myDiskEncryptionSetName}"
+  diskEncryptionSetID: "/subscriptions/subId/resourceGroups/cryptRG/providers/Microsoft.Compute/diskEncryptionSets/desName"
+EOF
 ```
-Next, run this deployment in your AKS cluster:
+## Replace your subscription ID
+```
+sed -i "s/subId/$subId/g" byok-azure-disk.yaml
+```
+## Replace the name of the Resource Group which contains Azure Disk Encryption set and KeyVault
+```
+sed -i "s/cryptRG/$cryptRG/g" byok-azure-disk.yaml
+```
+## Replace the name of the Resource Group which contains Azure Disk Encryption set and KeyVault
+```
+sed -i "s/desName/$desName/g" byok-azure-disk.yaml
+```
+Next, run this deployment in your OCP cluster:
 ```azurecli-interactive
-# Get credentials
-az aks get-credentials --name myAksCluster --resource-group myResourceGroup --output table
-
 # Update cluster
-kubectl apply -f byok-azure-disk.yaml
+oc apply -f byok-azure-disk.yaml
 ```
 
 ## Limitations
