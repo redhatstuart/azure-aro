@@ -123,7 +123,7 @@ cat > byok-azure-disk.yaml<< EOF
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
-  name: encrypted-disk-des
+  name: byok-encrypted-disk-des
 provisioner: kubernetes.io/azure-disk
 parameters:
   skuname: Standard_LRS
@@ -158,7 +158,7 @@ metadata:
 spec:
   accessModes:
   - ReadWriteOnce
-  storageClassName: encrypted-disk-des
+  storageClassName: byok-encrypted-disk-des
   resources:
     requests:
       storage: 1Gi
@@ -193,6 +193,7 @@ oc apply -f test-pvc.yaml
 ## Verify 
 At this point, a Pod should be created which creates a persistent volume claim which references the BYOK storage class. Running the following command will validate that the PVC has been deployed as expected:
 ```
+# Describe the cluster-wide persistent volume claims
 oc describe pvc
 ```
 
