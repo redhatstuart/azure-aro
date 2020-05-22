@@ -219,7 +219,7 @@ pvcUid="$(oc apply -f test-pvc.yaml -o json | jq -r '.items[0].metadata.uid')"
 # Determine the full Azure Disk name
 pvcName="$ocpClusterId-dynamic-pvc-$pvcUid"
 ```
-## Verify 
+## Verify PVC disk is configured with "EncryptionAtRestWithCustomerKey" 
 At this point, a Pod should be created which creates a persistent volume claim which references the BYOK storage class. Running the following command will validate that the PVC has been deployed as expected:
 ```azurecli-interactive
 # Describe the OpenShift cluster-wide persistent volume claims
