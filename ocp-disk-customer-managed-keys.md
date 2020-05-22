@@ -56,6 +56,7 @@ az keyvault key create --vault-name $vaultName --name $vaultKeyName --protection
 ```
 
 ## Create an Azure Disk Encryption Set instance
+The Azure Disk Encryption Set will be used as a reference point for disks in OCP. It is connected to the Azure Key Vault which was created and will obtain customer-managed keys from that location.
 ```azurecli-interactive
 # Retrieve the Key Vault Id and store it in a variable
 keyVaultId=$(az keyvault show --name $vaultName --query [id] -o tsv)
@@ -82,6 +83,7 @@ az role assignment create --assignee $desIdentity --role Reader --scope $keyVaul
 ```
 
 ## Obtain other IDs required for role assignments
+Other permissions need to be set to enable visiblity of the OCP MSI into the Key Vault Resource Group and for the Azure Disk Encryption Set to have visibility into the OCP Resource Group.
 ```
 # Obtain the OCP cluster ID assigned by the IPI
 ocpClusterId="$(jq -r '.cluster_id' terraform.tfvars.json)"
@@ -103,6 +105,7 @@ ocpRGResourceId="$(az group show -n $ocpGroup -o tsv --query [id])"
 ```
 
 ## Implement additinal role assignments required for BYOK encryption
+Apply the using the variables obtained in the previous step.
 ```azurecli-interactive
 # Assign the MSI AppID 'Reader' permission over the Azure Disk Encryption Set & Key Vault Resource Group
 az role assignment create --assignee $ocpAppId --role Reader --scope $encryptRGResourceId
@@ -113,11 +116,10 @@ az role assignment create --assignee $desIdentity --role Reader --scope $ocpRGRe
 
 ## Encrypt your OCP cluster data disk
 
-You can encrypt the OCP data disks with your own keys.
-
 Create storage class configuration files that utilize the *Azure Disk Encryption Set* previously created. Afterwards, execute the 'sed' commands which follow to make the appropriate variable substitutions. 
 
 ## Create the k8s Storage Class to be used for encrypted Premium & Standard disks
+Generate a storage class to be used for Standard_LRS and Premium_LRS disks which will also utilize the Azure Disk Encryption Set.
 ```
 # Premium Disks
 cat > encrypted-byok-azure-premium-disk.yaml<< EOF
@@ -152,6 +154,7 @@ volumeBindingMode: WaitForFirstConsumer
 EOF
 ```
 ## Perform variable substitutions within the Storage Class configuration
+Insert the variables which are unique to your OCP cluster into the two storage class configuration files just created.
 ```
 # Insert your current active subscription ID into the configuration
 sed -i "s/subId/$subId/g" encrypted-byok-azure-premium-disk.yaml
@@ -172,6 +175,7 @@ oc apply -f encrypted-byok-azure-premium-disk.yaml
 oc apply -f encrypted-byok-azure-standard-disk.yaml
 ```
 ## Deploy a test Pod utilizing the BYOK disk encryption storage class
+Verifying that customer-managed keys are enabled requires creating a persistent volume claim utilizing the appropriate storage class. The code below will create a small Pod which will also mount a persistent volume claim using Standard disks.
 ```
 # Create a pod which uses a persistent volume claim referencing the new storage class
 cat > test-pvc.yaml<< EOF
@@ -212,6 +216,7 @@ spec:
 EOF
 ```
 ## Apply the Test Pod configuration file
+The test pod configuration file is applied but concurrently the command also returns and sets as a variable the uid created for the persistent volume claim. We will use this to verify that the disk within Azure is encrypted.
 ```
 # Apply the test pod configuration file and set the PVC UID as a variable to query in Azure later
 pvcUid="$(oc apply -f test-pvc.yaml -o json | jq -r '.items[0].metadata.uid')"
