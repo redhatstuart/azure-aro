@@ -115,37 +115,61 @@ az role assignment create --assignee $desIdentity --role Reader --scope $ocpRGRe
 
 You can encrypt the OCP data disks with your own keys.
 
-Create a file called **byok-azure-disk.yaml** that contains the following information. Afterwards, execute the 'sed' commands which follow to make the appropriate variable substitutions. 
+Create storage class configuration files that utilize the *Azure Disk Encryption Set* previously created. Afterwards, execute the 'sed' commands which follow to make the appropriate variable substitutions. 
 
-## Create the k8s Storage Class to be used for encrypted disks
+## Create the k8s Storage Class to be used for encrypted premium disks
 ```
-cat > byok-azure-disk.yaml<< EOF
+cat > encrypted-byok-azure-premium-disk.yaml<< EOF
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
 metadata:
-  name: byok-encrypted-disk-des
+  name: managed-premium-byok
+provisioner: kubernetes.io/azure-disk
+parameters:
+  skuname: Premium_LRS
+  kind: Managed
+  diskEncryptionSetID: "/subscriptions/subId/resourceGroups/cryptRG/providers/Microsoft.Compute/diskEncryptionSets/desName"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
+EOF
+```
+## Create the k8s Storage Class to be used for encrypted standard disks
+```
+cat > encrypted-byok-azure-standard-disk.yaml<< EOF
+kind: StorageClass
+apiVersion: storage.k8s.io/v1
+metadata:
+  name: managed-standard-byok
 provisioner: kubernetes.io/azure-disk
 parameters:
   skuname: Standard_LRS
-  kind: managed
+  kind: Managed
   diskEncryptionSetID: "/subscriptions/subId/resourceGroups/cryptRG/providers/Microsoft.Compute/diskEncryptionSets/desName"
+reclaimPolicy: Delete
+allowVolumeExpansion: true
+volumeBindingMode: WaitForFirstConsumer
 EOF
 ```
 ## Perform variable substitutions within the Storage Class configuration
 ```
 # Insert your current active subscription ID into the configuration
-sed -i "s/subId/$subId/g" byok-azure-disk.yaml
+sed -i "s/subId/$subId/g" encrypted-byok-azure-premium-disk.yaml
+sed -i "s/subId/$subId/g" encrypted-byok-azure-standard-disk.yaml
 
 # Replace the name of the Resource Group which contains Azure Disk Encryption set and Key Vault
-sed -i "s/cryptRG/$cryptRG/g" byok-azure-disk.yaml
+sed -i "s/cryptRG/$cryptRG/g" encrypted-byok-azure-premium-disk.yaml
+sed -i "s/cryptRG/$cryptRG/g" encrypted-byok-azure-standard-disk.yaml
 
 # Replace the name of the Azure Disk Encryption Set
-sed -i "s/desName/$desName/g" byok-azure-disk.yaml
+sed -i "s/desName/$desName/g" encrypted-byok-azure-premium-disk.yaml
+sed -i "s/desName/$desName/g" encrypted-byok-azure-standard-disk.yaml
 ```
 Next, run this deployment in your OCP cluster to apply the storage class configuration:
 ```
-# Update cluster with new storage class
-oc apply -f byok-azure-disk.yaml
+# Update cluster with the new storage classes
+oc apply -f encrypted-byok-azure-premium-disk.yaml
+oc apply -f encrypted-byok-azure-standard-disk.yaml
 ```
 ## Deploy a test Pod utilizing the BYOK disk encryption storage class
 ```
@@ -154,11 +178,11 @@ cat > test-pvc.yaml<< EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: azure-managed-disk-des
+  name: azure-managed-disk-byok
 spec:
   accessModes:
   - ReadWriteOnce
-  storageClassName: byok-encrypted-disk-des
+  storageClassName: managed-standard-byok
   resources:
     requests:
       storage: 1Gi
@@ -184,7 +208,7 @@ spec:
   volumes:
     - name: volume
       persistentVolumeClaim:
-        claimName: azure-managed-disk-des
+        claimName: azure-managed-disk-byok
 EOF
 
 # Apply the test pod configuration file
