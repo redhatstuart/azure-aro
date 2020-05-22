@@ -117,8 +117,9 @@ You can encrypt the OCP data disks with your own keys.
 
 Create storage class configuration files that utilize the *Azure Disk Encryption Set* previously created. Afterwards, execute the 'sed' commands which follow to make the appropriate variable substitutions. 
 
-## Create the k8s Storage Class to be used for encrypted premium disks
+## Create the k8s Storage Class to be used for encrypted Premium & Standard disks
 ```
+# Premium Disks
 cat > encrypted-byok-azure-premium-disk.yaml<< EOF
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
@@ -133,9 +134,8 @@ reclaimPolicy: Delete
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
 EOF
-```
-## Create the k8s Storage Class to be used for encrypted standard disks
-```
+
+# Standard Disks
 cat > encrypted-byok-azure-standard-disk.yaml<< EOF
 kind: StorageClass
 apiVersion: storage.k8s.io/v1
