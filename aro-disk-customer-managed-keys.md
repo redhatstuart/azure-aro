@@ -190,7 +190,11 @@ EOF
 # Apply the test pod configuration file
 oc apply -f test-pvc.yaml
 ```
-Verify 
+## Verify 
+At this point, a Pod should be created which creates a persistent volume claim which references the BYOK storage class. Running the following command will validate that the PVC has been deployed as expected:
+```
+oc describe pvc
+```
 
 ## Limitations
 
