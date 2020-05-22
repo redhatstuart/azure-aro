@@ -36,7 +36,7 @@ desName="ocp-des"                  # Your Azure Disk Encryption Set
 vaultName="ocp-keyvault-1"         # Your Azure Key Vault
 vaultKeyName="myCustomOCPKey"      # The name of the key to be used within your Azure Key Vault
 
-subId="$(az account list -o tsv |grep True |awk '{print $2}')"
+subId="$(az account list -o tsv | grep True | awk '{print $2}')"
 ```
 
 ## Create an Azure Key Vault instance
@@ -147,7 +147,7 @@ Next, run this deployment in your OCP cluster to apply the storage class configu
 # Update cluster with new storage class
 oc apply -f byok-azure-disk.yaml
 ```
-## Deploy a Pod utilizing BYOK disk encryption
+## Deploy a test Pod utilizing the BYOK disk encryption storage class
 ```
 # Create a pod which uses a persistent volume claim referencing the new storage class
 cat > test-pvc.yaml<< EOF
