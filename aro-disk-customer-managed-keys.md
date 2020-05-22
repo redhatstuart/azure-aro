@@ -9,7 +9,7 @@ ms.date: 01/12/2020
 
 # Bring your own keys (BYOK) with Azure disks in Red Hat OpenShift Container Platform (IaaS)
 
-Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft-managed keys which includes OS and data disks. For additional control over encryption keys, you can supply [customer-managed keys][customer-managed-keys] to use for encryption at rest for the data disks for your OpenShift clusters.
+Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft-managed keys which includes OS and data disks. For additional control over encryption keys, you can supply [customer-managed keys][customer-managed-keys] to use for encryption at rest for the data disks in your OpenShift clusters.
 
 ## Before you begin
 
@@ -29,7 +29,7 @@ az account list-locations
 ```
 ## Declare your variables & determine your active Azure subscription
 
-```azurecli-interactive
+```
 azureDC="eastus"                   # The short name of the Azure Data Center you have deployed OCP in
 cryptRG="ocp-cryptRG"              # The name of the resource group to be created to manage the Azure Disk Encryption set and KeyVault
 desName="ocp-des"                  # Your Azure Disk Encryption Set
@@ -117,7 +117,7 @@ az role assignment create --assignee $desIdentity --role Reader --scope $ocpRGRe
 
 You can encrypt the OCP data disks with your own keys.
 
-Create a file called **byok-azure-disk.yaml** that contains the following information. After you save the file, execute the 'sed' commands which follow to make the appropriate variable substitutions. If you use the Azure Cloud Shell, this file can be created using vi or nano as if working on a virtual or physical system:
+Create a file called **byok-azure-disk.yaml** that contains the following information. Afterwards, execute the 'sed' commands which follow to make the appropriate variable substitutions. 
 
 ## Create the k8s Storage Class to be used for encrypted disks
 ```
@@ -146,19 +146,55 @@ sed -i "s/cryptRG/$cryptRG/g" byok-azure-disk.yaml
 sed -i "s/desName/$desName/g" byok-azure-disk.yaml
 ```
 Next, run this deployment in your OCP cluster:
-```azurecli-interactive
+```
 # Update cluster
 oc apply -f byok-azure-disk.yaml
 ```
 
+## Create a persistent volume claim to test the new storage class
+```
+cat > test-pvc.yaml<< EOF
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: azure-managed-disk-des
+spec:
+  accessModes:
+  - ReadWriteOnce
+  storageClassName: encrypted-disk-des
+  resources:
+    requests:
+      storage: 1Gi
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: mypod-des
+spec:
+  containers:
+  - name: mypod-des
+    image: nginx:1.15.5
+    resources:
+      requests:
+        cpu: 100m
+        memory: 128Mi
+      limits:
+        cpu: 250m
+        memory: 256Mi
+    volumeMounts:
+    - mountPath: "/mnt/azure"
+      name: volume
+  volumes:
+    - name: volume
+      persistentVolumeClaim:
+        claimName: azure-managed-disk-des
+EOF
+```
 ## Limitations
 
 * BYOK is only currently available in GA and Preview in certain [Azure regions][supported-regions]
-* OS Disk Encryption supported with Kubernetes version 1.17 and above   
+* OS Disk Encryption supported with OCP 4.4 + Kubernetes version 1.17 and above   
 * Available only in regions where BYOK is supported
-* Encryption with customer-managed keys currently is for new AKS clusters only, existing clusters cannot be upgraded
-* AKS cluster using Virtual Machine Scale Sets are required, no support for Virtual Machine Availability Sets
-
 
 ## Next steps
 
