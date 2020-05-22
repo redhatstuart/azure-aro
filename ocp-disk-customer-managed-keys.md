@@ -9,11 +9,11 @@ ms.date: 05/21/2020
 
 # Bring your own keys (BYOK) with Azure disks in Red Hat OpenShift Container Platform (IaaS)
 
-Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft-managed keys which includes OS and data disks. For additional control over encryption keys, you can supply [customer-managed keys][customer-managed-keys] to use for encryption at rest for the data disks in your OpenShift clusters.
+Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft platform-managed keys which includes OS and data disks. For additional control over encryption keys, you can supply [customer-managed keys][customer-managed-keys] to use for encryption at rest for the data disks in your OpenShift clusters.
 
 ## Before you begin
 
-* This article assumes that you have deployed OpenShift Container Platform using IaaS on Azure and **not** Azure Red Hat OpenShift (ARO).
+* This article assumes that you have deployed OpenShift Container Platform 4.4 (or greater) using IaaS on Azure and **not** Azure Red Hat OpenShift (ARO).
 
 * You must enable soft delete and purge protection for *Azure Key Vault* when using Key Vault to encrypt managed disks.
 
