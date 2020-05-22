@@ -114,10 +114,6 @@ az role assignment create --assignee $ocpAppId --role Reader --scope $encryptRGR
 az role assignment create --assignee $desIdentity --role Reader --scope $ocpRGResourceId
 ```
 
-## Encrypt your OCP cluster data disk
-
-Create storage class configuration files that utilize the *Azure Disk Encryption Set* previously created. Afterwards, execute the 'sed' commands which follow to make the appropriate variable substitutions. 
-
 ## Create the k8s Storage Class to be used for encrypted Premium & Standard disks
 Generate a storage class to be used for Standard_LRS and Premium_LRS disks which will also utilize the Azure Disk Encryption Set.
 ```
