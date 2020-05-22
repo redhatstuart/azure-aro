@@ -237,8 +237,6 @@ az disk show -n $pvcName -g $ocpGroup -o json --query [encryption]
 
 ## Next steps
 
-Review [best practices for AKS cluster security][best-practices-security]
-
 <!-- LINKS - external -->
 
 <!-- LINKS - internal -->
