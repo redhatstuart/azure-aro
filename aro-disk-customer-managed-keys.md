@@ -212,13 +212,17 @@ spec:
 EOF
 
 # Apply the test pod configuration file
-oc apply -f test-pvc.yaml
+pvcUid="$(oc apply -f test-pvc.yaml -o json | jq -r '.items[0].metadata.uid')"
+pvcName="$ocpClusterId-dynamic-pvc-$pvcUid"
 ```
 ## Verify 
 At this point, a Pod should be created which creates a persistent volume claim which references the BYOK storage class. Running the following command will validate that the PVC has been deployed as expected:
-```
-# Describe the cluster-wide persistent volume claims
+```azurecli-interactive
+# Describe the OpenShift cluster-wide persistent volume claims
 oc describe pvc
+
+# Verify with Azure that the disk is encrypted with a customer-managed key
+az disk show -n $pvcName -g $ocpGroup -o json --query [encryption]
 ```
 
 ## Limitations
