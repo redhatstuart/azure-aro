@@ -13,13 +13,13 @@ Azure Storage encrypts all data in a storage account at rest. By default, data i
 
 ## Before you begin
 
-* This article assumes that you have deployed OpenShift Container Platform using IaaS on Azure and **not** Azure Red Hat OpenShift.
+* This article assumes that you have deployed OpenShift Container Platform using IaaS on Azure and **not** Azure Red Hat OpenShift (ARO).
 
 * You must enable soft delete and purge protection for *Azure Key Vault* when using Key Vault to encrypt managed disks.
 
-* You are logged in to your OpenShift cluster as a global cluster-admin user (kubeadmin).
+* You are logged in to your OpenShift cluster with *oc* as a global cluster-admin user (kubeadmin).
 
-* You have installed OCP using the Installer-Provisioned-Infrastructure (IPI) and have access to the 'terraform.tfvars.json' file.
+* You have installed OCP using the Installer-Provisioned-Infrastructure (IPI) and have access to the 'terraform.tfvars.json' file which was created upon build.
 
 * You have 'jq' installed.
 
@@ -28,13 +28,13 @@ Azure Storage encrypts all data in a storage account at rest. By default, data i
 az account list-locations
 ```
 ## Declare your variables & determine your active Azure subscription
-You should configure the variables below to whatever may be appropriate for your deployment.  Make sure you use the same Azure Region for the Disk Encryption Set & KeyVault Resource Group that you did for your OpenShift Container Platform cluster.
+You should configure the variables below to whatever may be appropriate for your deployment.  Make sure you use the same Azure Region for the Disk BYOK Encryption Set & Key Vault Resource Group that you did for your OpenShift Container Platform cluster.
 ```
 azureDC="eastus"                   # The short name of the Azure Data Center you have deployed OCP in
-cryptRG="ocp-cryptRG"              # The name of the resource group to be created to manage the Azure Disk Encryption set and KeyVault
+cryptRG="ocp-cryptRG"              # The name of the resource group to be created to manage the Azure Disk Encryption set and Key Vault
 desName="ocp-des"                  # Your Azure Disk Encryption Set
-vaultName="ocp-keyvault-1"         # Your Azure KeyVault
-vaultKeyName="myCustomOCPKey"      # The name of the key to be used within your Azure KeyVault
+vaultName="ocp-keyvault-1"         # Your Azure Key Vault
+vaultKeyName="myCustomOCPKey"      # The name of the key to be used within your Azure Key Vault
 
 subId="$(az account list -o tsv |grep True |awk '{print $2}')"
 ```
@@ -45,7 +45,7 @@ Use an Azure Key Vault instance to store your keys.  You can optionally use the 
 Create a new *resource group*, a new *Key Vault* instance (with soft delete and purge protection) and create a *new key* within the vault to store your own custom key. 
 
 ```azurecli-interactive
-# Create new resource group in a supported Azure region to store the Azure Disk Encryption Set and Azure KeyVault
+# Create new resource group in a supported Azure region to store the Azure Disk Encryption Set and Azure Key Vault
 az group create -l $azureDC -n $cryptRG
 
 # Create an Azure Key Vault resource in a supported Azure region
@@ -63,15 +63,15 @@ keyVaultId=$(az keyvault show --name $vaultName --query [id] -o tsv)
 # Retrieve the Key Vault key URL and store it in a variable
 keyVaultKeyUrl=$(az keyvault key show --vault-name $vaultName --name $vaultKeyName  --query [key.kid] -o tsv)
 
-# Create a DiskEncryptionSet
+# Create an Azure Disk Encryption Set
 az disk-encryption-set create -n $desName -g $cryptRG --source-vault $keyVaultId --key-url $keyVaultKeyUrl
 ```
 
 ## Grant the Azure Disk Encryption Set access to Key Vault
-Use the DiskEncryptionSet and resource groups you created on the prior steps, and grant the DiskEncryptionSet resource access to the Azure Key Vault.
+Use the *Azure Disk Encryption Set* and *Resource Group* you created in the prior steps and grant the resource access to the Azure Key Vault.
 
 ```azurecli-interactive
-# Retrieve the DiskEncryptionSet value and set it a variable
+# Determine the Azure Disk Encryption Set AppId value and set it a variable
 desIdentity=$(az disk-encryption-set show -n $desName -g $cryptRG --query [identity.principalId] -o tsv)
 
 # Update keyvault security policy settings
@@ -95,7 +95,7 @@ msiName="$ocpClusterId-identity"
 # Determine the OCP MSI AppId
 ocpAppId="$(az identity show -n $msiName -g $ocpGroup -o tsv --query [clientId])"
 
-# Determine the Resource ID for the Azure Disk Encryption Set and Azure KeyVault Resource Group
+# Determine the Resource ID for the Azure Disk Encryption Set and Azure Key Vault Resource Group
 encryptRGResourceId="$(az group show -n $cryptRG -o tsv --query [id])"
 
 # Determine the Resoruce ID for the OCP Resource Group
@@ -104,7 +104,7 @@ ocpRGResourceId="$(az group show -n $ocpGroup -o tsv --query [id])"
 
 ## Implement additinal role assignments required for BYOK encryption
 ```azurecli-interactive
-# Assign the MSI AppID 'Reader' permission over the Disk Encryption Set & KeyVault Resource Group
+# Assign the MSI AppID 'Reader' permission over the Azure Disk Encryption Set & Key Vault Resource Group
 az role assignment create --assignee $ocpAppId --role Reader --scope $encryptRGResourceId
 
 # Assign the AppID of the Disk Encryption Set 'Reader' permission over the OCP Resource Group
@@ -131,26 +131,25 @@ parameters:
   diskEncryptionSetID: "/subscriptions/subId/resourceGroups/cryptRG/providers/Microsoft.Compute/diskEncryptionSets/desName"
 EOF
 ```
-## Replace your subscription ID
+## Perform variable substitutions within the Storage Class configuration
 ```
+# Insert your current active subscription ID into the configuration
 sed -i "s/subId/$subId/g" byok-azure-disk.yaml
-```
-## Replace the name of the Resource Group which contains Azure Disk Encryption set and KeyVault
-```
+
+# Replace the name of the Resource Group which contains Azure Disk Encryption set and Key Vault
 sed -i "s/cryptRG/$cryptRG/g" byok-azure-disk.yaml
-```
-## Replace the name of the Resource Group which contains Azure Disk Encryption set and KeyVault
-```
+
+# Replace the name of the Azure Disk Encryption Set
 sed -i "s/desName/$desName/g" byok-azure-disk.yaml
 ```
-Next, run this deployment in your OCP cluster:
+Next, run this deployment in your OCP cluster to apply the storage class configuration:
 ```
-# Update cluster
+# Update cluster with new storage class
 oc apply -f byok-azure-disk.yaml
 ```
-
-## Create a persistent volume claim to test the new storage class
+## Deploy a Pod utilizing BYOK disk encryption
 ```
+# Create a pod which uses a persistent volume claim referencing the new storage class
 cat > test-pvc.yaml<< EOF
 apiVersion: v1
 kind: PersistentVolumeClaim
@@ -187,11 +186,16 @@ spec:
       persistentVolumeClaim:
         claimName: azure-managed-disk-des
 EOF
+
+# Apply the test pod configuration file
+oc apply -f test-pvc.yaml
 ```
+Verify 
+
 ## Limitations
 
 * BYOK is only currently available in GA and Preview in certain [Azure regions][supported-regions]
-* OS Disk Encryption supported with OCP 4.4 + Kubernetes version 1.17 and above   
+* BYOK OS Disk Encryption supported with OCP 4.4 + Kubernetes version 1.17 and above   
 * Available only in regions where BYOK is supported
 
 ## Next steps
