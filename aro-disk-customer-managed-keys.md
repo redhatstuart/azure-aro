@@ -210,9 +210,13 @@ spec:
       persistentVolumeClaim:
         claimName: azure-managed-disk-byok
 EOF
-
-# Apply the test pod configuration file
+```
+## Apply the Test Pod configuration file
+```
+# Apply the test pod configuration file and set the PVC UID as a variable to query in Azure later
 pvcUid="$(oc apply -f test-pvc.yaml -o json | jq -r '.items[0].metadata.uid')"
+
+# Determine the full Azure Disk name
 pvcName="$ocpClusterId-dynamic-pvc-$pvcUid"
 ```
 ## Verify 
