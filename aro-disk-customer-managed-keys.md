@@ -1,9 +1,9 @@
 ---
 title: Use a customer-managed key to encrypt Azure disks in OpenShift Container Platform in IaaS
 description: Bring your own keys (BYOK) to encrypt OCP Data disks.
-services: container-service
+services: openshift
 ms.topic: article
-ms.date: 01/12/2020
+ms.date: 05/21/2020
 
 ---
 
@@ -13,7 +13,7 @@ Azure Storage encrypts all data in a storage account at rest. By default, data i
 
 ## Before you begin
 
-* This article assumes that you have deployed OpenShift Container Platform using IaaS on Azure and not ARO.
+* This article assumes that you have deployed OpenShift Container Platform using IaaS on Azure and **not** Azure Red Hat OpenShift.
 
 * You must enable soft delete and purge protection for *Azure Key Vault* when using Key Vault to encrypt managed disks.
 
@@ -28,7 +28,7 @@ Azure Storage encrypts all data in a storage account at rest. By default, data i
 az account list-locations
 ```
 ## Declare your variables & determine your active Azure subscription
-
+You should configure the variables below to whatever may be appropriate for your deployment.  Make sure you use the same Azure Region for the Disk Encryption Set & KeyVault Resource Group that you did for your OpenShift Container Platform cluster.
 ```
 azureDC="eastus"                   # The short name of the Azure Data Center you have deployed OCP in
 cryptRG="ocp-cryptRG"              # The name of the resource group to be created to manage the Azure Disk Encryption set and KeyVault
@@ -40,10 +40,9 @@ subId="$(az account list -o tsv |grep True |awk '{print $2}')"
 ```
 
 ## Create an Azure Key Vault instance
-
 Use an Azure Key Vault instance to store your keys.  You can optionally use the Azure portal to [Configure customer-managed keys with Azure Key Vault][byok-azure-portal]
 
-Create a new *resource group*, a new *Key Vault* instance (with soft delete and purge protection) and create a new key within the vault to store your own custom key.  Make sure you use the same Azure Region for the Disk Encryption Set & KeyVault Resource Group that you did for your OpenShift Container Platform cluster.
+Create a new *resource group*, a new *Key Vault* instance (with soft delete and purge protection) and create a *new key* within the vault to store your own custom key. 
 
 ```azurecli-interactive
 # Create new resource group in a supported Azure region to store the Azure Disk Encryption Set and Azure KeyVault
@@ -56,7 +55,7 @@ az keyvault create -n $vaultName -g $cryptRG --enable-purge-protection true --en
 az keyvault key create --vault-name $vaultName --name $vaultKeyName --protection software
 ```
 
-## Create an instance of a DiskEncryptionSet
+## Create an Azure Disk Encryption Set instance
 ```azurecli-interactive
 # Retrieve the Key Vault Id and store it in a variable
 keyVaultId=$(az keyvault show --name $vaultName --query [id] -o tsv)
@@ -68,23 +67,22 @@ keyVaultKeyUrl=$(az keyvault key show --vault-name $vaultName --name $vaultKeyNa
 az disk-encryption-set create -n $desName -g $cryptRG --source-vault $keyVaultId --key-url $keyVaultKeyUrl
 ```
 
-## Grant the DiskEncryptionSet access to key vault
-
+## Grant the Azure Disk Encryption Set access to Key Vault
 Use the DiskEncryptionSet and resource groups you created on the prior steps, and grant the DiskEncryptionSet resource access to the Azure Key Vault.
 
 ```azurecli-interactive
-# Retrieve the DiskEncryptionSet value and set a variable
+# Retrieve the DiskEncryptionSet value and set it a variable
 desIdentity=$(az disk-encryption-set show -n $desName -g $cryptRG --query [identity.principalId] -o tsv)
 
-# Update security policy settings
+# Update keyvault security policy settings
 az keyvault set-policy -n $vaultName -g $cryptRG --object-id $desIdentity --key-permissions wrapkey unwrapkey get
 
-# Assign the reader role
+# Ensure the Azure Disk Encryption Set can read the contents of the Azure Key Vault
 az role assignment create --assignee $desIdentity --role Reader --scope $keyVaultId
 ```
 
 ## Obtain other IDs required for role assignments
-```azurecli-interactive
+```
 # Obtain the OCP cluster ID assigned by the IPI
 ocpClusterId="$(jq -r '.cluster_id' terraform.tfvars.json)"
 
