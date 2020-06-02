@@ -33,6 +33,8 @@ LOCATION="eastus"
 export LOCATION
 VNET="10.151.0.0"
 export VNET
+VNET_RG=""
+export VNET_RG
 WORKERS="4"
 export WORKERS
 
@@ -51,6 +53,10 @@ VNET_OCTET1="$(echo $VNET | cut -f1 -d.)"
 export VNET_OCTET1
 VNET_OCTET2="$(echo $VNET | cut -f2 -d.)"
 export VNET_OCTET2
+if [ -z "$VNET_RG" ]; then
+    VNET_RG="$RESOURCEGROUP"
+    export VNET_RG
+fi
 
 
 ################################################################################################## Infrastructure Provision
@@ -103,7 +109,7 @@ echo "done"
 
 # VNet Creation
 echo -n "Creating Virtual Network..."
-az network vnet create -g "$RESOURCEGROUP" -n $VNET_NAME --address-prefixes $VNET/16 -o table > /dev/null
+az network vnet create -g "$VNET_RG" -n $VNET_NAME --address-prefixes $VNET/16 -o table > /dev/null
 echo "done"
 
 # Subnet Creation
@@ -146,9 +152,9 @@ echo "==========================================================================
 echo "Building Azure Red Hat OpenShift - this takes roughly 30-40 minutes. The time is now: $(date)..."
 echo " "
 echo "Executing: "
-echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --cluster-resource-group $RESOURCEGROUP-cluster --vnet=$VNET_NAME --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS $CUSTOMDNS $PULLSECRET -o table"
+echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --cluster-resource-group $RESOURCEGROUP-cluster --vnet=$VNET_NAME --vnet-resource-group=$VNET_RG --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS $CUSTOMDNS $PULLSECRET -o table"
 echo " "
-time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group $RESOURCEGROUP-cluster --vnet="$VNET_NAME" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" $CUSTOMDNS $PULLSECRET -o table
+time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group "$RESOURCEGROUP-cluster" --vnet="$VNET_NAME" --vnet-resource-group="$VNET_RG" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" $CUSTOMDNS $PULLSECRET -o table
 
 
 ################################################################################################## Post Provisioning
