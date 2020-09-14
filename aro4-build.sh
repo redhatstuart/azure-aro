@@ -79,21 +79,21 @@ if [ -n "$(az provider show -n Microsoft.RedHatOpenShift -o table | grep -E '(Un
     echo "done."
 fi
 
-if [ -z "$(az extension list -o table |grep aro)" ]; then
-    echo "The Azure CLI extension for ARO has not been installed."
-    echo -n "I will attempt to register the extension now (this may take a few minutes)..."
-    az extension add -n aro --index https://az.aroapp.io/stable > /dev/null
-    echo "done."
-    echo -n "Verifying the Azure CLI extension exists..."
-    if [ -z "$(az extension list -o table |grep aro)" ]; then
-        echo "error! Unable to add the Azure CLI extension for ARO. Please remediate this."
-        exit 1
-    fi
-    echo "done."
-fi
+#if [ -z "$(az extension list -o table |grep aro)" ]; then
+#    echo "The Azure CLI extension for ARO has not been installed."
+#    echo -n "I will attempt to register the extension now (this may take a few minutes)..."
+#    az extension add -n aro --index https://az.aroapp.io/stable > /dev/null
+#    echo "done."
+#    echo -n "Verifying the Azure CLI extension exists..."
+#    if [ -z "$(az extension list -o table |grep aro)" ]; then
+#        echo "error! Unable to add the Azure CLI extension for ARO. Please remediate this."
+#        exit 1
+#    fi
+#    echo "done."
+#fi
 
-echo -n "Updating the Azure CLI extension to the latest version (if required)..."
-az extension update -n aro --index https://az.aroapp.io/stable 
+#echo -n "Updating the Azure CLI extension to the latest version (if required)..."
+#az extension update -n aro --index https://az.aroapp.io/stable 
 
 if [ $# -eq 1 ]; then
     CUSTOMDNS="--domain=$1"
