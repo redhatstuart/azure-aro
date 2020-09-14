@@ -26,19 +26,20 @@ export RAND
 
 # Customize these variables as you need for your cluster deployment
 APIPRIVACY="Public"
-export APIPRIVACY
 INGRESSPRIVACY="Public"
-export INGRESSPRIVACY
 LOCATION="eastus"
-export LOCATION
 VNET="10.151.0.0"
-export VNET
 VNET_RG=""
-export VNET_RG
 WORKERS="4"
+
+################################################ Don't change these
+export APIPRIVACY
+export INGRESSPRIVACY
+export LOCATION
+export VNET
+export VNET_RG
 export WORKERS
 
-# Don't change these
 BUILDDATE="$(date +%Y%m%d-%H%M%S)"
 export BUILDDATE
 CLUSTER="aro-$(whoami)-$RAND"
@@ -58,13 +59,25 @@ if [ -z "$VNET_RG" ]; then
     export VNET_RG
 fi
 
-
 ################################################################################################## Infrastructure Provision
 
 
 echo " "
 echo "Building Azure Red Hat OpenShift 4"
 echo "----------------------------------"
+
+if [ -n "$(az provider show -n Microsoft.Compute -o table | grep -E '(Unregistered|NotRegistered)')" ]; then
+    echo "The Azure Compute resource provider has not been registered for your subscription $SUBID."
+    echo -n "I will attempt to register the Azure Compute RP now (this may take a few minutes)..."
+    az provider register -n Microsoft.Compute --wait > /dev/null
+    echo "done."
+    echo -n "Verifying the Azure Compute RP is registered..."
+    if [ -n "$(az provider show -n Microsoft.Compute -o table | grep -E '(Unregistered|NotRegistered)')" ]; then
+        echo "error! Unable to register the Azure Compute RP. Please remediate this."
+        exit 1
+    fi
+    echo "done."
+fi
 
 if [ -n "$(az provider show -n Microsoft.RedHatOpenShift -o table | grep -E '(Unregistered|NotRegistered)')" ]; then
     echo "The ARO resource provider has not been registered for your subscription $SUBID."
@@ -78,22 +91,6 @@ if [ -n "$(az provider show -n Microsoft.RedHatOpenShift -o table | grep -E '(Un
     fi
     echo "done."
 fi
-
-#if [ -z "$(az extension list -o table |grep aro)" ]; then
-#    echo "The Azure CLI extension for ARO has not been installed."
-#    echo -n "I will attempt to register the extension now (this may take a few minutes)..."
-#    az extension add -n aro --index https://az.aroapp.io/stable > /dev/null
-#    echo "done."
-#    echo -n "Verifying the Azure CLI extension exists..."
-#    if [ -z "$(az extension list -o table |grep aro)" ]; then
-#        echo "error! Unable to add the Azure CLI extension for ARO. Please remediate this."
-#        exit 1
-#    fi
-#    echo "done."
-#fi
-
-#echo -n "Updating the Azure CLI extension to the latest version (if required)..."
-#az extension update -n aro --index https://az.aroapp.io/stable 
 
 if [ $# -eq 1 ]; then
     CUSTOMDNS="--domain=$1"
