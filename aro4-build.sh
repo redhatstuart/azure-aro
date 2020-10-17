@@ -46,7 +46,7 @@ CLUSTER="aro-$(whoami)-$RAND"
 export CLUSTER
 RESOURCEGROUP="$CLUSTER-$LOCATION"
 export RESOURCEGROUP
-SUBID="$(az account show -o json |jq -r '.id')"
+SUBID="$(az account show -o tsv --query id)"
 export SUBID
 VNET_NAME="$CLUSTER-vnet"
 export VNET_NAME
@@ -143,7 +143,6 @@ echo " "
 
 ################################################################################################## Build ARO
 
-
 # Build ARO
 echo "==============================================================================================================================================================="
 echo "Building Azure Red Hat OpenShift - this takes roughly 30-40 minutes. The time is now: $(date)..."
@@ -160,9 +159,9 @@ time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group "$
 # Update ARO RG tags
 echo " "
 echo -n "Updating resource group tags..."
-DOMAIN="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.clusterProfile.domain')"
+DOMAIN="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query 'clusterProfile.domain' 2>/dev/null)"
 export DOMAIN
-VERSION="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.clusterProfile.version')"
+VERSION="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query 'clusterProfile.version' 2>/dev/null)"
 export VERSION
 az group update -g "$RESOURCEGROUP" --tags "ARO $VERSION Build Date=$BUILDDATE" -o table >> /dev/null 2>&1
 echo "done."
@@ -171,13 +170,13 @@ echo "done."
 if [ -n "$CUSTOMDNS" ]; then
     DNS="$(echo $CUSTOMDNS | cut -f2 -d=)"
     export DNS
-    if [ -z "$(az network dns zone list -o json | jq -r '.[] | .name' | grep $DNS)" ]; then
+    if [ -z "$(az network dns zone list -o tsv --query '[*].name' | grep $DNS)" ]; then
         echo -n "A DNS zone was not detected for $DNS. Creating..."
 	az network dns zone create -n $DNS -g $RESOURCEGROUP -o table >> /dev/null 2>&1
         echo "done." 
         echo " "
         echo "Dumping nameservers for newly created zone..." 
-        az network dns zone show -g $DNSRG -n $RESOURCEGROUP -o json | jq -r '.nameServers[]'
+        az network dns zone show -n $DNS -g $RESOURCEGROUP -o tsv --query 'nameServers'
         echo " "
     else
         echo "A DNS zone was already detected for $DNS. Skipping zone creation..."
@@ -186,7 +185,7 @@ if [ -n "$CUSTOMDNS" ]; then
     export DNSRG
     if [ -z "$(az network dns record-set list -g $DNSRG -z $DNS -o table |grep api)" ]; then
         echo -n "An A record for the ARO API does not exist. Creating..." 
-        IPAPI="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null | jq -r '.apiserverProfile.ip')"
+        IPAPI="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query apiserverProfile.ip)"
 	export IPAPI
 	az network dns record-set a add-record -z $DNS -g $DNSRG -a $IPAPI -n api -o table >> /dev/null 2>&1
         echo "done."
@@ -195,7 +194,7 @@ if [ -n "$CUSTOMDNS" ]; then
     fi
     if [ -z "$(az network dns record-set list -g $DNSRG -z $DNS -o table |grep apps)" ]; then
         echo -n "An A record for the apps wildcard ingress does not exist. Creating..."
-        IPAPPS="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null | jq -r '.ingressProfiles[0] .ip')"
+        IPAPPS="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query ingressProfiles[*].ip)"
 	export IPAPPS
         az network dns record-set a add-record -z $DNS -g $DNSRG -a $IPAPPS -n *.apps -o table >> /dev/null 2>&1
         echo "done."
@@ -213,12 +212,12 @@ echo "$(az aro list-credentials -n $CLUSTER -g $RESOURCEGROUP -o table 2>/dev/nu
 echo " "
 echo "$APIPRIVACY Console URL"
 echo "-------------------"
-echo "$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.consoleProfile.url')"
+echo "$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query 'consoleProfile.url' 2>/dev/null)"
 
 echo " "
 echo "$APIPRIVACY API URL"
 echo "-------------------"
-echo "$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o json 2>/dev/null |jq -r '.apiserverProfile.url')"
+echo "$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query 'apiserverProfile.url' 2>/dev/null)"
 
 echo " "
 echo "To delete this ARO Cluster"
