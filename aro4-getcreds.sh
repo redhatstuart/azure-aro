@@ -30,6 +30,9 @@ fi
 clusterName="$(az aro list -o table |grep -i $1 | awk '{print $1}')"
 clusterResourceGroup="$(az aro list -o table |grep -i $1 | awk '{print $2}')"
 
+echo "Cluster name: $clusterName"
+echo " "
+
 az aro show -n $clusterName -g $clusterResourceGroup -o jsonc --query '[apiserverProfile , consoleProfile , ingressProfiles]'
 az aro list-credentials -o table -n $clusterName -g $clusterResourceGroup
 
