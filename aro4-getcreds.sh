@@ -36,3 +36,8 @@ echo " "
 az aro show -n $clusterName -g $clusterResourceGroup -o jsonc --query '[apiserverProfile , consoleProfile , ingressProfiles]'
 az aro list-credentials -o table -n $clusterName -g $clusterResourceGroup
 
+echo " "
+echo "To delete cluster:"
+echo "az aro delete -n $clusterName -g $clusterResourceGroup -y ; az group delete -n $clusterResourceGroup -y"
+echo " "
+
