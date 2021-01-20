@@ -34,10 +34,13 @@ echo "Cluster name: $clusterName"
 echo " "
 
 az aro show -n $clusterName -g $clusterResourceGroup -o jsonc --query '[apiserverProfile , consoleProfile , ingressProfiles]'
+
 echo " "
+
 az aro list-credentials -o table -n $clusterName -g $clusterResourceGroup
-apiServer="$(az aro show -n $clusterName -g $clusterResourceGroup -o tsv --query '[apiserverProfile.url]')"
-kubePW="$(az aro list-credentials -n $clusterName -g $clusterResourceGroup -o tsv --query '[kubeadminPassword]')"
+
+declare apiServer="$(az aro show -n $clusterName -g $clusterResourceGroup -o tsv --query '[apiserverProfile.url]')"
+declare kubePW="$(az aro list-credentials -n $clusterName -g $clusterResourceGroup -o tsv --query '[kubeadminPassword]')"
 
 echo " "
 echo "To log in to CLI:"
