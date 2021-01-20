@@ -34,7 +34,14 @@ echo "Cluster name: $clusterName"
 echo " "
 
 az aro show -n $clusterName -g $clusterResourceGroup -o jsonc --query '[apiserverProfile , consoleProfile , ingressProfiles]'
+echo " "
 az aro list-credentials -o table -n $clusterName -g $clusterResourceGroup
+apiServer="$(az aro show -n aro-stkirk-biahf -g aro-stkirk-biahf-eastus -o tsv --query '[apiserverProfile.url]')"
+kubePW="$(az aro list-credentials -n aro-stkirk-biahf -g aro-stkirk-biahf-eastus -o tsv --query '[kubeadminPassword]')"
+
+echo " "
+echo "To log in to CLI:"
+echo "oc login $apiServer -u kubeadmin -p $kubePW"
 
 echo " "
 echo "To delete cluster:"
