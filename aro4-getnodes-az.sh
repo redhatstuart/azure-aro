@@ -9,9 +9,7 @@
 # WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION WITH THE
 # SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
 
-# Apply additional storage classes for other types of Azure disks
+# Dump the Azure Availability Zones that each Azure Red Hat OpenShift node resides in
 
-oc apply -f managed-std-hdd.yaml
-oc apply -f managed-std-ssd.yaml
-oc apply -f managed-ultra-ssd.yaml
-oc get sc
+oc get nodes -o custom-columns=NAME:'{.metadata.name}',REGION:'{.metadata.labels.topology\.kubernetes\.io/region}',ZONE:'{metadata.labels.topology\.kubernetes\.io/zone}'
+
