@@ -31,6 +31,7 @@ LOCATION="eastus"
 VNET="10.151.0.0"
 VNET_RG=""
 WORKERS="4"
+WORKER_SIZE="Standard_D4s_v3"
 
 ################################################ Don't change these
 export APIPRIVACY
@@ -39,6 +40,7 @@ export LOCATION
 export VNET
 export VNET_RG
 export WORKERS
+export WORKER_SIZE
 
 BUILDDATE="$(date +%Y%m%d-%H%M%S)"
 export BUILDDATE
@@ -144,13 +146,13 @@ echo " "
 ################################################################################################## Build ARO
 
 # Build ARO
-echo "==============================================================================================================================================================="
-echo "Building Azure Red Hat OpenShift - this takes roughly 30-40 minutes. The time is now: $(date)..."
+echo "=============================================================================================================================================================================="
+echo "Building Azure Red Hat OpenShift with $WORKERS x $WORKER_SIZE sized workers - this takes roughly 30-40 minutes. The time is now: $(date)..."
 echo " "
 echo "Executing: "
-echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --cluster-resource-group $RESOURCEGROUP-cluster --vnet=$VNET_NAME --vnet-resource-group=$VNET_RG --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS $CUSTOMDNS $PULLSECRET -o table"
+echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --cluster-resource-group $RESOURCEGROUP-cluster --vnet=$VNET_NAME --vnet-resource-group=$VNET_RG --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS --worker-vm-size=$WORKER_SIZE $CUSTOMDNS $PULLSECRET -o table"
 echo " "
-time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group "$RESOURCEGROUP-cluster" --vnet="$VNET_NAME" --vnet-resource-group="$VNET_RG" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" $CUSTOMDNS $PULLSECRET -o table
+time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group "$RESOURCEGROUP-cluster" --vnet="$VNET_NAME" --vnet-resource-group="$VNET_RG" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" --worker-vm-size="$WORKER_SIZE"  $CUSTOMDNS $PULLSECRET -o table
 
 
 ################################################################################################## Post Provisioning
