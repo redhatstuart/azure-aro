@@ -28,7 +28,7 @@ echo "Based on your current Azure Red Hat OpenShift AAD Application ID, $SPAPPID
 echo "Create date: $CREATED"
 echo "Expiration date: $EXPIRING"
 echo " "
-echo "Shall I continue?"
+echo "Shall I continue? (you must be logged in as a cluster administrator with 'oc')"
 PS3="Select a numbered option >> "
 options=("Yes" "No")
 select yn in "${options[@]}"
