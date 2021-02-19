@@ -146,6 +146,9 @@ parameters:
   kind: Managed
   diskEncryptionSetID: "/subscriptions/subId/resourceGroups/buildRG/providers/Microsoft.Compute/diskEncryptionSets/desName"
   resourceGroup: buildRG
+  cachingmode: None
+  diskIopsReadWrite: "2000"  # minimum value: 2 IOPS/GiB
+  diskMbpsReadWrite: "320"   # minimum value: 0.032/GiB
 reclaimPolicy: Delete
 allowVolumeExpansion: true
 volumeBindingMode: WaitForFirstConsumer
