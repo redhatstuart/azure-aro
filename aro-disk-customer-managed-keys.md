@@ -90,13 +90,13 @@ Other permissions need to be set to enable visiblity of the ARO MSI into the Key
 # Obtain the Application ID of the service principal used in the ARO cluster
 aroSPAppId="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
 
-# Set the name of the Azure Managed Service Identity created by the IPI
+# Set the name of the ARO Managed Service Identity 
 msiName="$aroCluster-msi"
 
 # Create the Managed Service Identity (MSI) required for disk encryption
 az identity create -g $buildRG -n $msiName -o jsonc
 
-# Determine the ARO MSI AppId
+# Determine the ARO Managed Service Identity AppId
 aroMSIAppId="$(az identity show -n $msiName -g $buildRG -o tsv --query [clientId])"
 
 # Determine the Resource ID for the Azure Disk Encryption Set and Azure Key Vault Resource Group
