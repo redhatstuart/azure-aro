@@ -58,7 +58,7 @@ az keyvault key create --vault-name $vaultName --name $vaultKeyName --protection
 ```
 
 ## Create an Azure Disk Encryption Set instance
-The Azure Disk Encryption Set will be used as a reference point for disks in OCP. It is connected to the Azure Key Vault which was created and will obtain customer-managed keys from that location.
+The Azure Disk Encryption Set will be used as a reference point for disks in ARO. It is connected to the Azure Key Vault which was created and will obtain customer-managed keys from that location.
 ```azurecli-interactive
 # Retrieve the Key Vault Id and store it in a variable
 keyVaultId="$(az keyvault show --name $vaultName --query [id] -o tsv)"
@@ -85,7 +85,7 @@ az role assignment create --assignee $desIdentity --role Reader --scope $keyVaul
 ```
 
 ## Obtain other IDs required for role assignments
-Other permissions need to be set to enable visiblity of the OCP MSI into the Key Vault Resource Group and for the Azure Disk Encryption Set to have visibility into the OCP Resource Group.
+Other permissions need to be set to enable visiblity of the ARO MSI into the Key Vault Resource Group and for the Azure Disk Encryption Set to have visibility into the ARO Resource Group.
 ```
 # Obtain the Application ID of the service principal used in the ARO cluster
 aroSPAppId="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
@@ -96,7 +96,7 @@ msiName="$aroCluster-msi"
 # Create the Managed Service Identity (MSI) required for disk encryption
 az identity create -g $buildRG -n $msiName -o jsonc
 
-# Determine the OCP MSI AppId
+# Determine the ARO MSI AppId
 aroMSIAppId="$(az identity show -n $msiName -g $buildRG -o tsv --query [clientId])"
 
 # Determine the Resource ID for the Azure Disk Encryption Set and Azure Key Vault Resource Group
@@ -109,7 +109,7 @@ Apply the using the variables obtained in the previous step.
 # Assign the MSI AppID 'Reader' permission over the Azure Disk Encryption Set & Key Vault Resource Group
 az role assignment create --assignee $aroMSIAppId --role Reader --scope $buildRGResourceId -o jsonc
 
-# Assign the AppID of the Disk Encryption Set 'Reader' permission over the OCP Resource Group
+# Assign the AppID of the Disk Encryption Set 'Reader' permission over the ARO Resource Group
 az role assignment create --assignee $aroSPAppId --role Contributor --scope $buildRGResourceId -o jsonc
 ```
 
@@ -151,7 +151,7 @@ volumeBindingMode: WaitForFirstConsumer
 EOF
 ```
 ## Perform variable substitutions within the Storage Class configuration
-Insert the variables which are unique to your OCP cluster into the two storage class configuration files just created.
+Insert the variables which are unique to your ARO cluster into the two storage class configuration files just created.
 ```
 # Insert your current active subscription ID into the configuration
 sed -i "s/subId/$subId/g" managed-premium-encrypted-byok.yaml.yaml
@@ -234,7 +234,7 @@ az disk show -n $pvcName -g $ocpGroup -o json --query [encryption]
 ## Limitations
 
 * BYOK is only currently available in GA and Preview in certain [Azure regions][supported-regions]
-* BYOK OS Disk Encryption supported with OCP 4.4 + Kubernetes version 1.17 and above   
+* BYOK OS Disk Encryption supported with ARO 4.4 + Kubernetes version 1.17 and above   
 * Available only in regions where BYOK is supported
 
 ## Next steps
