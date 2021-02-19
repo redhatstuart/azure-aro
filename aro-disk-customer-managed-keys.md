@@ -154,16 +154,16 @@ EOF
 Insert the variables which are unique to your ARO cluster into the two storage class configuration files just created.
 ```
 # Insert your current active subscription ID into the configuration
-sed -i "s/subId/$subId/g" managed-premium-encrypted-byok.yaml.yaml
-sed -i "s/subId/$subId/g" managed-ultra-encrypted-byok.yaml.yaml
+sed -i "s/subId/$subId/g" managed-premium-encrypted-byok.yaml
+sed -i "s/subId/$subId/g" managed-ultra-encrypted-byok.yaml
 
 # Replace the name of the Resource Group which contains Azure Disk Encryption set and Key Vault
-sed -i "s/buildRG/$buildRG/g" managed-premium-encrypted-byok.yaml.yaml
-sed -i "s/buildRG/$buildRG/g" managed-ultra-encrypted-byok.yaml.yaml
+sed -i "s/buildRG/$buildRG/g" managed-premium-encrypted-byok.yaml
+sed -i "s/buildRG/$buildRG/g" managed-ultra-encrypted-byok.yaml
 
 # Replace the name of the Azure Disk Encryption Set
-sed -i "s/desName/$desName/g" managed-premium-encrypted-byok.yaml.yaml
-sed -i "s/desName/$desName/g" managed-ultra-encrypted-byok.yaml.yaml
+sed -i "s/desName/$desName/g" managed-premium-encrypted-byok.yaml
+sed -i "s/desName/$desName/g" managed-ultra-encrypted-byok.yaml
 ```
 Next, run this deployment in your ARO cluster to apply the storage class configuration:
 ```
