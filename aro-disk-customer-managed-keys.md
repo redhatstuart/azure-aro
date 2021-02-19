@@ -30,7 +30,7 @@ az account list-locations -o table
 ## Declare your variables & determine your active Azure subscription
 You should configure the variables below to whatever may be appropriate for your the ARO cluster in which you wish you enable BYOK/CMK:
 ```
-aroCluster="mycluster"             # The name of the ARO cluster that you wish to enable BYOK on. This can be obtained from "az aro list -o table"
+aroCluster="mycluster"             # The name of the ARO cluster that you wish to enable BYOK/CMK on. This can be obtained from "az aro list -o table"
 buildRG="mycluster-rg"             # The name of the resource group used when you initially built the ARO cluster. This can be obtained from "az aro list -o table"
 desName="aro-des"                  # Your Azure Disk Encryption Set name
 vaultName="aro-keyvault-1"         # Your Azure Key Vault name
@@ -38,16 +38,14 @@ vaultKeyName="myCustomAROKey"      # The name of the key to be used within your 
 ```
 
 ## Obtain your subscription ID
-Your Azure subscription ID is used multiple times in the configuration of BYOK
+Your Azure subscription ID is used multiple times in the configuration of BYOK/CMK
 ```azurecli-interactive
 # Obtain your Azure Subscription ID and store it in a variable
 subId="$(az account list -o tsv | grep True | awk '{print $3}')"
 ```
 
 ## Create an Azure Key Vault instance
-An Azure Key Vault instance must be used to store your keys. You can optionally use the Azure portal to [Configure customer-managed keys with Azure Key Vault][byok-azure-portal]
-
-Create a new *Key Vault* instance (with purge protection) and create a *new key* within the vault to store your own custom key. 
+An Azure Key Vault instance must be used to store your keys. Create a new *Key Vault* instance (with purge protection) and create a *new key* within the vault to store your own custom key. 
 
 ```azurecli-interactive
 # Create an Azure Key Vault resource in a supported Azure region
@@ -69,8 +67,6 @@ keyVaultKeyUrl="$(az keyvault key show --vault-name $vaultName --name $vaultKeyN
 # Create an Azure Disk Encryption Set
 az disk-encryption-set create -n $desName -g $buildRG --source-vault $keyVaultId --key-url $keyVaultKeyUrl -o table
 
-# Update keyvault security policy settings
-az keyvault set-policy -n $vaultName -g $buildRG --object-id $desIdentity --key-permissions wrapkey unwrapkey get -o table
 ```
 
 ## Grant the Azure Disk Encryption Set access to Key Vault
@@ -79,6 +75,9 @@ Use the *Azure Disk Encryption Set* and *Resource Group* you created in the prio
 ```azurecli-interactive
 # Determine the Azure Disk Encryption Set AppId value and set it a variable
 desIdentity="$(az disk-encryption-set show -n $desName -g $buildRG --query [identity.principalId] -o tsv)"
+
+# Update keyvault security policy settings to allow access to the disk encryption set
+az keyvault set-policy -n $vaultName -g $buildRG --object-id $desIdentity --key-permissions wrapkey unwrapkey get -o table
 
 # Ensure the Azure Disk Encryption Set can read the contents of the Azure Key Vault
 az role assignment create --assignee $desIdentity --role Reader --scope $keyVaultId -o jsonc
@@ -103,7 +102,7 @@ aroMSIAppId="$(az identity show -n $msiName -g $buildRG -o tsv --query [clientId
 buildRGResourceId="$(az group show -n $buildRG -o tsv --query [id])"
 ```
 
-## Implement additinal role assignments required for BYOK encryption
+## Implement additinal role assignments required for BYOK/CMK encryption
 Apply the using the variables obtained in the previous step.
 ```azurecli-interactive
 # Assign the MSI AppID 'Reader' permission over the Azure Disk Encryption Set & Key Vault Resource Group
@@ -171,7 +170,7 @@ Next, run this deployment in your ARO cluster to apply the storage class configu
 oc apply -f managed-premium-encrypted-byok.yaml
 oc apply -f managed-ultra-encrypted-byok.yaml
 ```
-## Deploy a test Pod utilizing the BYOK disk encryption storage class
+## Deploy a test Pod utilizing the BYOK/CMK disk encryption storage class
 Verifying that customer-managed keys are enabled requires creating a persistent volume claim utilizing the appropriate storage class. The code below will create a small Pod which will also mount a persistent volume claim using Standard disks.
 ```
 # Create a pod which uses a persistent volume claim referencing the new storage class
@@ -222,7 +221,7 @@ pvcUid="$(oc apply -f test-pvc.yaml -o json | jq -r '.items[0].metadata.uid')"
 pvcName="$ocpClusterId-dynamic-pvc-$pvcUid"
 ```
 ## Verify PVC disk is configured with "EncryptionAtRestWithCustomerKey" 
-At this point, a Pod should be created which creates a persistent volume claim which references the BYOK storage class. Running the following command will validate that the PVC has been deployed as expected:
+At this point, a Pod should be created which creates a persistent volume claim which references the BYOK/CMK storage class. Running the following command will validate that the PVC has been deployed as expected:
 ```azurecli-interactive
 # Describe the OpenShift cluster-wide persistent volume claims
 oc describe pvc
@@ -233,9 +232,9 @@ az disk show -n $pvcName -g $ocpGroup -o json --query [encryption]
 
 ## Limitations
 
-* BYOK is only currently available in GA and Preview in certain [Azure regions][supported-regions]
-* BYOK OS Disk Encryption supported with ARO 4.4 + Kubernetes version 1.17 and above   
-* Available only in regions where BYOK is supported
+* BYOK/CMK is only currently available in GA and Preview in certain [Azure regions][supported-regions]
+* BYOK/CMK OS Disk Encryption supported with ARO 4.4 + Kubernetes version 1.17 and above   
+* Available only in regions where BYOK/CMK is supported
 
 ## Next steps
 
