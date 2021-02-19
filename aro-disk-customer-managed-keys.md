@@ -14,7 +14,7 @@ Azure Storage encrypts all data in a storage account at rest. By default, data i
 ## Before you begin
 This article assumes that:
 
-* You have a pre-existing ARO cluster at version 4.4 (or greater)
+* You have a pre-existing ARO cluster at version 4.5 (or greater)
 
 * You have 'jq', 'oc', and the 'az' Azure CLI installed
 
@@ -235,7 +235,7 @@ az disk show -n $pvName -g $buildRG -o json --query [encryption]
 ## Limitations
 
 * BYOK/CMK is only currently available in GA and Preview in certain [Azure regions][supported-regions]
-* BYOK/CMK OS Disk Encryption supported with ARO 4.4 + Kubernetes version 1.17 and above   
+* BYOK/CMK OS Disk Encryption supported with ARO 4.5 + Kubernetes version 1.17 and above   
 * Available only in regions where BYOK/CMK is supported
 * Ultra disks must be enabled on your subscription prior to use
 
