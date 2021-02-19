@@ -101,7 +101,7 @@ aroMSIAppId="$(az identity show -n $msiName -g $buildRG -o tsv --query [clientId
 buildRGResourceId="$(az group show -n $buildRG -o tsv --query [id])"
 ```
 
-## Implement additinal role assignments required for BYOK/CMK encryption
+## Implement additional role assignments required for BYOK/CMK encryption
 Apply the required role assignments using the variables obtained in the previous step:
 ```azurecli-interactive
 # Assign the MSI AppID 'Reader' permission over the Azure Disk Encryption Set & Key Vault Resource Group
@@ -112,7 +112,7 @@ az role assignment create --assignee $aroSPObjId --role Contributor --scope $bui
 ```
 
 ## Create the k8s Storage Class to be used for encrypted Premium & Ultra disks
-Generate a storage class to be used for Premium_LRS and Ultra_LRS disks which will also utilize the Azure Disk Encryption Set:
+Generate a storage class to be used for Premium_LRS and UltraSSD_LRS disks which will also utilize the Azure Disk Encryption Set:
 ```
 # Premium Disks
 cat > managed-premium-encrypted-byok.yaml<< EOF
