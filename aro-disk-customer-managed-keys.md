@@ -70,7 +70,7 @@ az disk-encryption-set create -n $desName -g $buildRG --source-vault $keyVaultId
 ```
 
 ## Grant the Azure Disk Encryption Set access to Key Vault
-Use the *Azure Disk Encryption Set* and *Resource Group* you created in the prior steps and grant the resource access to the Azure Key Vault.
+Use the *Azure Disk Encryption Set* you created in the prior steps and grant the resource access to the Azure Key Vault.
 
 ```azurecli-interactive
 # Determine the Azure Disk Encryption Set AppId value and set it a variable
@@ -88,6 +88,9 @@ Other permissions need to be set to enable visiblity of the ARO MSI into the Key
 ```
 # Obtain the Application ID of the service principal used in the ARO cluster
 aroSPAppId="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
+
+# Obtain the Object ID of the service principal used in the ARO cluster
+aroSPObjId="$(az ad sp show --id $aroSPAppId -o tsv --query [objectId])"
 
 # Set the name of the ARO Managed Service Identity 
 msiName="$aroCluster-msi"
@@ -108,8 +111,8 @@ Apply the using the variables obtained in the previous step.
 # Assign the MSI AppID 'Reader' permission over the Azure Disk Encryption Set & Key Vault Resource Group
 az role assignment create --assignee $aroMSIAppId --role Reader --scope $buildRGResourceId -o jsonc
 
-# Assign the AppID of the Disk Encryption Set 'Reader' permission over the ARO Resource Group
-az role assignment create --assignee $aroSPAppId --role Contributor --scope $buildRGResourceId -o jsonc
+# Assign the ARO Service Principal 'Contributor' permission over the Azure Disk Encryption Set & Key Vault Resource Group
+az role assignment create --assignee $aroSPObjId --role Contributor --scope $buildRGResourceId -o jsonc
 ```
 
 ## Create the k8s Storage Class to be used for encrypted Premium & Standard disks
