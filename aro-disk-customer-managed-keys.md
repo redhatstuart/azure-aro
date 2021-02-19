@@ -22,7 +22,7 @@ This article assumes that:
 
 * You are logged in to the Azure CLI using *az* with an account authorized to grant "Contributor" access in the same subscription as the ARO cluster
 
-At this stage, support exists only for encrypting ARO persistent volumes with customer-managed keys. This feature is not presently available for master/worker node OS disks
+At this stage, support exists only for encrypting ARO persistent volumes with customer-managed keys. This feature is not presently available for master/worker node OS disks.
 
 ## Declare Cluster & Encryption Variables
 You should configure the variables below to whatever may be appropriate for your the ARO cluster in which you wish you enable BYOK/CMK:
