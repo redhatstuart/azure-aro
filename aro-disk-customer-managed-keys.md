@@ -1,19 +1,20 @@
 ---
-title: Configuring Bring Your Own Key (BYOK) / Customer-managed Key (CMK) encryption of persistent volumes in Azure Red Hat OpenShift (ARO)
-description: Bring your own key (BYOK) / Customer-managed Key (CMK) to encrypt Azure Red Hat OpenShift persistent volumes.
+title: Configuring Bring Your Own Key (BYOK) / Customer-managed Key (CMK) encryption on Azure Red Hat OpenShift (ARO)
+description: Bring your own key (BYOK) / Customer-managed Key (CMK) deploy instructions for Azure Red Hat OpenShift
 services: azure red hat openshift
 ms.topic: article
 ms.date: 02/18/2021
 
 ---
 
-# Configuring Bring Your Own Key (BYOK) / Customer-managed Key (CMK) encryption of persistent volumes in Azure Red Hat OpenShift (ARO)
+# Configuring Bring Your Own Key (BYOK) / Customer-managed Key (CMK) encryption on Azure Red Hat OpenShift (ARO)
 
-Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft platform-managed keys which includes OS and data disks. For additional control over encryption keys, you can supply customer-managed-keys to use for encryption at rest for the persistent volume data disks in your Azure Red Hat OpenShift clusters.
+Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft platform-managed keys which includes OS and data disks. For additional control over encryption keys, you can supply customer-managed-keys to use for encryption at rest in your Azure Red Hat OpenShift clusters.
 
 ## Before you begin
+This article assumes that:
 
-* This article assumes that you have a pre-existing ARO cluster at version 4.4 (or greater)
+* You have a pre-existing ARO cluster at version 4.4 (or greater)
 
 * You have 'jq', 'oc', and the 'az' Azure CLI installed
 
@@ -21,31 +22,27 @@ Azure Storage encrypts all data in a storage account at rest. By default, data i
 
 * You are logged in to the Azure CLI using *az* with an account authorized to grant "Contributor" access in the same subscription as the ARO cluster
 
-* At this stage, support exists only for encrypting ARO persistent volumes with customer-managed keys. This feature is not presently available for master/worker node OS disks
+At this stage, support exists only for encrypting ARO persistent volumes with customer-managed keys. This feature is not presently available for master/worker node OS disks
 
-```azurecli-interactive
-# Optionally retrieve Azure region short names for use on upcoming commands
-az account list-locations -o table
-```
-## Declare your variables & determine your active Azure subscription
+## Declare Cluster & Encryption Variables
 You should configure the variables below to whatever may be appropriate for your the ARO cluster in which you wish you enable BYOK/CMK:
 ```
-aroCluster="mycluster"             # The name of the ARO cluster that you wish to enable BYOK/CMK on. This can be obtained from "az aro list -o table"
-buildRG="mycluster-rg"             # The name of the resource group used when you initially built the ARO cluster. This can be obtained from "az aro list -o table"
-desName="aro-des"                  # Your Azure Disk Encryption Set name
-vaultName="aro-keyvault-1"         # Your Azure Key Vault name
-vaultKeyName="myCustomAROKey"      # The name of the key to be used within your Azure Key Vault. This is the name of the key, not the actual value of the key
+aroCluster="mycluster"             # The name of the ARO cluster that you wish to enable BYOK/CMK on. This can be obtained from *az aro list -o table*
+buildRG="mycluster-rg"             # The name of the resource group used when you initially built the ARO cluster. This can be obtained from *az aro list -o table*
+desName="aro-des"                  # Your Azure Disk Encryption Set name. This must be unique in your subscription.
+vaultName="aro-keyvault-1"         # Your Azure Key Vault name. This must be unique in your subscription.
+vaultKeyName="myCustomAROKey"      # The name of the key to be used within your Azure Key Vault. This is the name of the key, not the actual value of the key that you will rotate.
 ```
 
 ## Obtain your subscription ID
-Your Azure subscription ID is used multiple times in the configuration of BYOK/CMK
+Your Azure subscription ID is used multiple times in the configuration of BYOK/CMK. Obtain it and store it as a variable:
 ```azurecli-interactive
 # Obtain your Azure Subscription ID and store it in a variable
 subId="$(az account list -o tsv | grep True | awk '{print $3}')"
 ```
 
 ## Create an Azure Key Vault instance
-An Azure Key Vault instance must be used to store your keys. Create a new *Key Vault* instance (with purge protection) and create a *new key* within the vault to store your own custom key. 
+An Azure Key Vault instance must be used to store your keys. Create a new *Key Vault* instance (with purge protection) and create a *new key* within the vault to store your own custom key:
 
 ```azurecli-interactive
 # Create an Azure Key Vault resource in a supported Azure region
@@ -69,7 +66,7 @@ az disk-encryption-set create -n $desName -g $buildRG --source-vault $keyVaultId
 ```
 
 ## Grant the Azure Disk Encryption Set access to Key Vault
-Use the *Azure Disk Encryption Set* you created in the prior steps and grant the resource access to the Azure Key Vault.
+Use the *Azure Disk Encryption Set* you created in the prior steps and grant the resource access to the Azure Key Vault:
 
 ```azurecli-interactive
 # Determine the Azure Disk Encryption Set AppId value and set it a variable
@@ -83,7 +80,7 @@ az role assignment create --assignee $desIdentity --role Reader --scope $keyVaul
 ```
 
 ## Obtain other IDs required for role assignments
-Other permissions need to be set to enable visiblity of the ARO MSI into the Key Vault Resource Group and for the Azure Disk Encryption Set to have visibility into the ARO Resource Group.
+The Managed Service Identity (MSI) must be created. Other permissions must also be set for the ARO MSI and for the Azure Disk Encryption Set:
 ```
 # Obtain the Application ID of the service principal used in the ARO cluster
 aroSPAppId="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
@@ -105,7 +102,7 @@ buildRGResourceId="$(az group show -n $buildRG -o tsv --query [id])"
 ```
 
 ## Implement additinal role assignments required for BYOK/CMK encryption
-Apply the using the variables obtained in the previous step.
+Apply the required role assignments using the variables obtained in the previous step:
 ```azurecli-interactive
 # Assign the MSI AppID 'Reader' permission over the Azure Disk Encryption Set & Key Vault Resource Group
 az role assignment create --assignee $aroMSIAppId --role Reader --scope $buildRGResourceId -o jsonc
@@ -114,8 +111,8 @@ az role assignment create --assignee $aroMSIAppId --role Reader --scope $buildRG
 az role assignment create --assignee $aroSPObjId --role Contributor --scope $buildRGResourceId -o jsonc
 ```
 
-## Create the k8s Storage Class to be used for encrypted Premium & Standard disks
-Generate a storage class to be used for Premium_LRS and Ultra_LRS disks which will also utilize the Azure Disk Encryption Set.
+## Create the k8s Storage Class to be used for encrypted Premium & Ultra disks
+Generate a storage class to be used for Premium_LRS and Ultra_LRS disks which will also utilize the Azure Disk Encryption Set:
 ```
 # Premium Disks
 cat > managed-premium-encrypted-byok.yaml<< EOF
@@ -155,7 +152,7 @@ volumeBindingMode: WaitForFirstConsumer
 EOF
 ```
 ## Perform variable substitutions within the Storage Class configuration
-Insert the variables which are unique to your ARO cluster into the two storage class configuration files just created.
+Insert the variables which are unique to your ARO cluster into the two storage class configuration files just created:
 ```
 # Insert your current active subscription ID into the configuration
 sed -i "s/subId/$subId/g" managed-premium-encrypted-byok.yaml
@@ -217,7 +214,7 @@ spec:
 EOF
 ```
 ## Apply the Test Pod configuration file
-The test pod configuration file is applied but concurrently the command also returns and sets as a variable the uid created for the persistent volume claim. We will use this to verify that the disk within Azure is encrypted.
+The test pod configuration file is applied but concurrently the command also returns and sets as a variable the uid created for the persistent volume claim. We will use this to verify that the disk acting as the persistent volume within Azure is encrypted.
 ```
 # Apply the test pod configuration file and set the PVC UID as a variable to query in Azure later
 pvcUid="$(oc apply -f test-pvc.yaml -o json | jq -r '.items[0].metadata.uid')"
@@ -240,6 +237,7 @@ az disk show -n $pvName -g $buildRG -o json --query [encryption]
 * BYOK/CMK is only currently available in GA and Preview in certain [Azure regions][supported-regions]
 * BYOK/CMK OS Disk Encryption supported with ARO 4.4 + Kubernetes version 1.17 and above   
 * Available only in regions where BYOK/CMK is supported
+* Ultra disks must be enabled on your subscription prior to use
 
 ## Next steps
 
