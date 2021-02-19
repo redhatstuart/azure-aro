@@ -54,7 +54,7 @@ Create a new *Key Vault* instance (with purge protection) and create a *new key*
 az keyvault create -n $vaultName -g $buildRG --enable-purge-protection true -o table
 
 # Create the actual key within the Azure Key Vault
-az keyvault key create --vault-name $vaultName --name $vaultKeyName --protection software -o table
+az keyvault key create --vault-name $vaultName --name $vaultKeyName --protection software -o jsonc
 ```
 
 ## Create an Azure Disk Encryption Set instance
