@@ -68,6 +68,9 @@ keyVaultKeyUrl="$(az keyvault key show --vault-name $vaultName --name $vaultKeyN
 
 # Create an Azure Disk Encryption Set
 az disk-encryption-set create -n $desName -g $buildRG --source-vault $keyVaultId --key-url $keyVaultKeyUrl -o table
+
+# Update keyvault security policy settings
+az keyvault set-policy -n $vaultName -g $buildRG --object-id $desIdentity --key-permissions wrapkey unwrapkey get -o table
 ```
 
 ## Grant the Azure Disk Encryption Set access to Key Vault
@@ -76,9 +79,6 @@ Use the *Azure Disk Encryption Set* and *Resource Group* you created in the prio
 ```azurecli-interactive
 # Determine the Azure Disk Encryption Set AppId value and set it a variable
 desIdentity="$(az disk-encryption-set show -n $desName -g $buildRG --query [identity.principalId] -o tsv)"
-
-# Update keyvault security policy settings
-az keyvault set-policy -n $vaultName -g $buildRG --object-id $desIdentity --key-permissions wrapkey unwrapkey get -o table
 
 # Ensure the Azure Disk Encryption Set can read the contents of the Azure Key Vault
 az role assignment create --assignee $desIdentity --role Reader --scope $keyVaultId -o jsonc
