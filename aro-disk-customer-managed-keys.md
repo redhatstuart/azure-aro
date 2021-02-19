@@ -168,8 +168,8 @@ sed -i "s/desName/$desName/g" managed-ultra-encrypted-byok.yaml
 Next, run this deployment in your ARO cluster to apply the storage class configuration:
 ```
 # Update cluster with the new storage classes
-oc apply -f managed-premium-encrypted-byok.yaml.yaml
-oc apply -f managed-ultra-encrypted-byok.yaml.yaml
+oc apply -f managed-premium-encrypted-byok.yaml
+oc apply -f managed-ultra-encrypted-byok.yaml
 ```
 ## Deploy a test Pod utilizing the BYOK disk encryption storage class
 Verifying that customer-managed keys are enabled requires creating a persistent volume claim utilizing the appropriate storage class. The code below will create a small Pod which will also mount a persistent volume claim using Standard disks.
