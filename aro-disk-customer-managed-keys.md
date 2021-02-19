@@ -66,7 +66,6 @@ keyVaultKeyUrl="$(az keyvault key show --vault-name $vaultName --name $vaultKeyN
 
 # Create an Azure Disk Encryption Set
 az disk-encryption-set create -n $desName -g $buildRG --source-vault $keyVaultId --key-url $keyVaultKeyUrl -o table
-
 ```
 
 ## Grant the Azure Disk Encryption Set access to Key Vault
@@ -221,7 +220,7 @@ The test pod configuration file is applied but concurrently the command also ret
 pvcUid="$(oc apply -f test-pvc.yaml -o json | jq -r '.items[0].metadata.uid')"
 
 # Determine the full Azure Disk name
-pvcName="$ocpClusterId-dynamic-pvc-$pvcUid"
+pvName="$(oc get pv pvc-$pvcUid -o json |jq -r '.spec.azureDisk.diskName')"
 ```
 ## Verify PVC disk is configured with "EncryptionAtRestWithCustomerKey" 
 At this point, a Pod should be created which creates a persistent volume claim which references the BYOK/CMK storage class. Running the following command will validate that the PVC has been deployed as expected:
@@ -230,7 +229,7 @@ At this point, a Pod should be created which creates a persistent volume claim w
 oc describe pvc
 
 # Verify with Azure that the disk is encrypted with a customer-managed key
-az disk show -n $pvcName -g $ocpGroup -o json --query [encryption]
+az disk show -n $pvName -g $buildRG -o json --query [encryption]
 ```
 
 ## Limitations
