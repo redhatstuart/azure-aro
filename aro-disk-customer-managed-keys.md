@@ -13,7 +13,7 @@ keywords: aro, openshift, az aro, red hat, cli, encryption, byok, cmk, keys
 
 # Configuring Bring Your Own Key (BYOK) / Customer-managed Key (CMK) encryption on Azure Red Hat OpenShift (ARO)
 
-Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft platform-managed keys which includes OS and data disks. For additional control over encryption keys, you can supply customer-managed-keys to use for encryption at rest in your Azure Red Hat OpenShift clusters.
+Azure Storage encrypts all data in a storage account at rest. By default, data is encrypted with Microsoft platform-managed keys which includes operating system and data disks. For additional control over persistent volumes, you can supply customer-managed encryption keys to use for persistent volume encryption at rest in your Azure Red Hat OpenShift clusters.
 
 ## Before you begin
 This article assumes that:
@@ -26,7 +26,7 @@ This article assumes that:
 
 * You are logged in to the Azure CLI using *az* with an account authorized to grant "Contributor" access in the same subscription as the ARO cluster
 
-At this stage, support exists only for encrypting ARO persistent volumes with customer-managed keys. This feature is not presently available for master/worker node OS disks.
+At this stage, support exists only for encrypting ARO persistent volumes with customer-managed keys. This feature is not presently available for master/worker node operating system disks.
 
 ## Declare Cluster & Encryption Variables
 You should configure the variables below to whatever may be appropriate for your the ARO cluster in which you wish you enable BYOK/CMK:
@@ -242,7 +242,8 @@ az disk show -n $pvName -g $buildRG -o json --query [encryption]
 ## Limitations
 
 * BYOK/CMK is only currently available in GA and Preview in certain [Azure regions][supported-regions]
-* BYOK/CMK OS Disk Encryption supported with ARO 4.5 + Kubernetes version 1.17 and above   
+* BYOK/CMK persistent volume disk encryption supported with ARO 4.5 + Kubernetes version 1.17 and above   
+* BYOK/CMK operating system disk encryption is not presently available
 * Available only in regions where BYOK/CMK is supported
 * [Ultra disks must be enabled](disks-enable-ultra-ssd.md) on your subscription prior to use
 
