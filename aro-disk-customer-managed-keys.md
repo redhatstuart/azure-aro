@@ -237,7 +237,7 @@ At this point, a Pod should be created which creates a persistent volume claim w
 oc describe pvc
 
 # Verify with Azure that the disk is encrypted with a customer-managed key
-az disk show -n $pvName -g $buildRG -o json --query [encryption]
+az disk show -n $pvName -g $buildRG -o json --query [name,encryption]
 ```
 
 ## Limitations
