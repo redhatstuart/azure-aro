@@ -70,7 +70,7 @@ keyVaultKeyUrl="$(az keyvault key show --vault-name $vaultName --name $vaultKeyN
 az disk-encryption-set create -n $desName -g $buildRG --source-vault $keyVaultId --key-url $keyVaultKeyUrl -o table
 ```
 
-## Grant the Azure Disk Encryption Set access to Key Vault
+## Assign required policies to the Azure Key Vault for the Azure Disk Encryption Set
 Use the *Azure Disk Encryption Set* you created in the prior steps and grant the resource access to the Azure Key Vault:
 
 ```azurecli-interactive
