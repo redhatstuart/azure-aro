@@ -83,7 +83,7 @@ az role assignment create --assignee $desIdentity --role Reader --scope $keyVaul
 The Managed Service Identity (MSI) must be created. Other permissions must also be set for the ARO MSI and for the Azure Disk Encryption Set:
 ```
 # Obtain the Application ID of the service principal used in the ARO cluster
-aroSPAppId="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
+aroSPAppId="$(oc get secret azure-credentials -n kube-system -o jsonpath='{.data.azure_client_id}' | base64 --decode)"
 
 # Obtain the Object ID of the service principal used in the ARO cluster
 aroSPObjId="$(az ad sp show --id $aroSPAppId -o tsv --query [objectId])"
