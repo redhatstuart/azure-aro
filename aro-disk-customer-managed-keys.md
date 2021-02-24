@@ -20,7 +20,7 @@ This article assumes that:
 
 * You have a pre-existing ARO cluster at version 4.5 (or greater)
 
-* You have 'jq', 'oc', and the 'az' Azure CLI installed
+* You have the 'oc' OpenShift command line tool, base64 (part of coreutils) and the 'az' Azure CLI installed
 
 * You are logged in to your ARO cluster using *oc* as a global cluster-admin user (kubeadmin)
 
@@ -224,10 +224,10 @@ EOF
 The test pod configuration file is applied but concurrently the command also returns and sets as a variable the uid created for the persistent volume claim. We will use this to verify that the disk acting as the persistent volume within Azure is encrypted.
 ```
 # Apply the test pod configuration file and set the PVC UID as a variable to query in Azure later
-pvcUid="$(oc apply -f test-pvc.yaml -o json | jq -r '.items[0].metadata.uid')"
+pvcUid="$(oc apply -f test-pvc.yaml -o jsonpath='{.items[0].metadata.uid}')"
 
 # Determine the full Azure Disk name
-pvName="$(oc get pv pvc-$pvcUid -o json |jq -r '.spec.azureDisk.diskName')"
+pvName="$(oc get pv pvc-$pvcUid -o jsonpath='{.spec.azureDisk.diskName}')"
 ```
 ## Verify PVC disk is configured with "EncryptionAtRestWithCustomerKey" 
 At this point, a Pod should be created which creates a persistent volume claim which references the BYOK/CMK storage class. Running the following command will validate that the PVC has been deployed as expected:
