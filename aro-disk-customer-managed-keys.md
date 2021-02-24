@@ -1,9 +1,13 @@
 ---
 title: Configuring Bring Your Own Key (BYOK) / Customer-managed Key (CMK) encryption on Azure Red Hat OpenShift (ARO)
 description: Bring your own key (BYOK) / Customer-managed Key (CMK) deploy instructions for Azure Red Hat OpenShift
-services: azure red hat openshift
+ms.service: azure-redhat-openshift
 ms.topic: article
-ms.date: 02/18/2021
+ms.date: 02/24/2021
+author: stkirk
+ms.author: stkirk
+keywords: aro, openshift, az aro, red hat, cli, encryption, byok, cmk, keys
+# Customer intent: My security policies dictate that data at rest must be encrypted. Beyond this, the key used to encrypt data must be able to be changed at-will by a person authorized to do so.
 
 ---
 
@@ -110,7 +114,8 @@ az role assignment create --assignee $aroMSIAppId --role Reader --scope $buildRG
 # Assign the ARO Service Principal 'Contributor' permission over the Azure Disk Encryption Set & Key Vault Resource Group
 az role assignment create --assignee $aroSPObjId --role Contributor --scope $buildRGResourceId -o jsonc
 ```
-> [!IMPORTANT]
+
+> [!NOTE]
 > If you receive an error message for any of the above role assignments, allow time for the Azure resources to be fully created and try the role assignment once again.
 
 ## Create the k8s Storage Class to be used for encrypted Premium & Ultra disks
