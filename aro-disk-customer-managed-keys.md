@@ -74,9 +74,6 @@ desIdentity="$(az disk-encryption-set show -n $desName -g $buildRG --query [iden
 
 # Update keyvault security policy settings to allow access to the disk encryption set
 az keyvault set-policy -n $vaultName -g $buildRG --object-id $desIdentity --key-permissions wrapkey unwrapkey get -o table
-
-# Ensure the Azure Disk Encryption Set can read the contents of the Azure Key Vault
-az role assignment create --assignee $desIdentity --role Reader --scope $keyVaultId -o jsonc
 ```
 
 ## Obtain other IDs required for role assignments
@@ -104,12 +101,17 @@ buildRGResourceId="$(az group show -n $buildRG -o tsv --query [id])"
 ## Implement additional role assignments required for BYOK/CMK encryption
 Apply the required role assignments using the variables obtained in the previous step:
 ```azurecli-interactive
+# Ensure the Azure Disk Encryption Set can read the contents of the Azure Key Vault
+az role assignment create --assignee $desIdentity --role Reader --scope $keyVaultId -o jsonc
+
 # Assign the MSI AppID 'Reader' permission over the Azure Disk Encryption Set & Key Vault Resource Group
 az role assignment create --assignee $aroMSIAppId --role Reader --scope $buildRGResourceId -o jsonc
 
 # Assign the ARO Service Principal 'Contributor' permission over the Azure Disk Encryption Set & Key Vault Resource Group
 az role assignment create --assignee $aroSPObjId --role Contributor --scope $buildRGResourceId -o jsonc
 ```
+> [!IMPORTANT]
+> If you receive an error message for any of the above role assignments, allow time for the Azure resources to be fully created and try the role assignment once again.
 
 ## Create the k8s Storage Class to be used for encrypted Premium & Ultra disks
 Generate a storage class to be used for Premium_LRS and UltraSSD_LRS disks which will also utilize the Azure Disk Encryption Set:
