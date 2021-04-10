@@ -25,9 +25,14 @@ RAND="$(echo $RANDOM | tr '[0-9]' '[a-z]')"
 export RAND
 
 # Customize these variables as you need for your cluster deployment
+# If you wish to use custom DNS servers, you can place them into the variable below as space-separated entries
+
 APIPRIVACY="Public"
+DNSSERVERS=""
+#DNSSERVERS="1.2.3.4 55.55.55.55 15.15.15.15"
 INGRESSPRIVACY="Public"
 LOCATION="eastus"
+MASTER_SIZE="Standard_D8s_v3"
 VNET="10.151.0.0"
 VNET_RG=""
 WORKERS="4"
@@ -35,8 +40,10 @@ WORKER_SIZE="Standard_D4s_v3"
 
 ################################################ Don't change these
 export APIPRIVACY
+export DNSSERVERS
 export INGRESSPRIVACY
 export LOCATION
+export MASTER_SIZE
 export VNET
 export VNET_RG
 export WORKERS
@@ -95,10 +102,19 @@ if [ -n "$(az provider show -n Microsoft.RedHatOpenShift -o table | grep -E '(Un
 fi
 
 if [ $# -eq 1 ]; then
-    CUSTOMDNS="--domain=$1"
-    export CUSTOMDNS
+    CUSTOMDOMAIN="--domain=$1"
+    export CUSTOMDOMAIN
     echo "You have specified a parameter for a custom domain: $1. I will configure ARO to use this domain."
     echo " "
+fi
+
+if [ -n "$DNSSERVERS" ]; then
+   CUSTOMDNSSERVERS="--dns-servers $DNSSERVERS"
+   export CUSTOMDNSSERVERS
+   echo "You have specified that the ARO virtual network should be created using the custom DNS servers: $DNSSERVERS"
+   echo " "
+else
+   CUSTOMDNSSERVERS=""
 fi
 
 # Resource Group Creation
@@ -108,20 +124,20 @@ echo "done"
 
 # VNet Creation
 echo -n "Creating Virtual Network..."
-az network vnet create -g "$VNET_RG" -n $VNET_NAME --address-prefixes $VNET/16 -o table > /dev/null
+az network vnet create -g "$VNET_RG" -n $VNET_NAME --address-prefixes $VNET/16 $CUSTOMDNSSERVERS -o table > /dev/null
 echo "done"
 
 # Subnet Creation
 echo -n "Creating 'Master' Subnet..."
-az network vnet subnet create -g "$RESOURCEGROUP" --vnet-name $VNET_NAME -n "$CLUSTER-master" --address-prefixes "$VNET_OCTET1.$VNET_OCTET2.$(shuf -i 0-254 -n 1).0/24" --service-endpoints Microsoft.ContainerRegistry -o table > /dev/null
+az network vnet subnet create -g "$RESOURCEGROUP" --vnet-name "$VNET_NAME" -n "$CLUSTER-master" --address-prefixes "$VNET_OCTET1.$VNET_OCTET2.$(shuf -i 0-254 -n 1).0/24" --service-endpoints Microsoft.ContainerRegistry -o table > /dev/null
 echo "done"
 echo -n "Creating 'Worker' Subnet..."
-az network vnet subnet create -g "$RESOURCEGROUP" --vnet-name $VNET_NAME -n "$CLUSTER-worker" --address-prefixes "$VNET_OCTET1.$VNET_OCTET2.$(shuf -i 0-254 -n 1).0/24" --service-endpoints Microsoft.ContainerRegistry -o table > /dev/null
+az network vnet subnet create -g "$RESOURCEGROUP" --vnet-name "$VNET_NAME" -n "$CLUSTER-worker" --address-prefixes "$VNET_OCTET1.$VNET_OCTET2.$(shuf -i 0-254 -n 1).0/24" --service-endpoints Microsoft.ContainerRegistry -o table > /dev/null
 echo "done"
 
 # VNet & Subnet Configuration
 echo -n "Disabling 'PrivateLinkServiceNetworkPolicies' in 'Master' Subnet..."
-az network vnet subnet update -g "$RESOURCEGROUP" --vnet-name $VNET_NAME -n "$CLUSTER-master" --disable-private-link-service-network-policies true -o table > /dev/null
+az network vnet subnet update -g "$RESOURCEGROUP" --vnet-name "$VNET_NAME" -n "$CLUSTER-master" --disable-private-link-service-network-policies true -o table > /dev/null
 echo "done"
 echo -n "Adding ARO RP Contributor access to VNET..."
 az role assignment create --scope /subscriptions/$SUBID/resourceGroups/$RESOURCEGROUP/providers/Microsoft.Network/virtualNetworks/$VNET_NAME --assignee f1dd0a37-89c6-4e07-bcd1-ffd3d43d8875 --role "Contributor" -o table > /dev/null
@@ -147,12 +163,12 @@ echo " "
 
 # Build ARO
 echo "=============================================================================================================================================================================="
-echo "Building Azure Red Hat OpenShift with $WORKERS x $WORKER_SIZE sized workers - this takes roughly 30-40 minutes. The time is now: $(date)..."
+echo "Building ARO with 3 x $MASTER_SIZE masters & $WORKERS x $WORKER_SIZE sized workers - this takes roughly 30-40mins. The time is now: $(date)..."
 echo " "
 echo "Executing: "
-echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --cluster-resource-group $RESOURCEGROUP-cluster --vnet=$VNET_NAME --vnet-resource-group=$VNET_RG --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS --worker-vm-size=$WORKER_SIZE $CUSTOMDNS $PULLSECRET -o table"
+echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --cluster-resource-group $RESOURCEGROUP-cluster --vnet=$VNET_NAME --vnet-resource-group=$VNET_RG --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS --master-vm-size=$MASTER_SIZE --worker-vm-size=$WORKER_SIZE $CUSTOMDOMAIN $PULLSECRET -o table"
 echo " "
-time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group "$RESOURCEGROUP-cluster" --vnet="$VNET_NAME" --vnet-resource-group="$VNET_RG" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" --worker-vm-size="$WORKER_SIZE" $CUSTOMDNS $PULLSECRET -o table
+time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group "$RESOURCEGROUP-cluster" --vnet="$VNET_NAME" --vnet-resource-group="$VNET_RG" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" --master-vm-size="$MASTER_SIZE" --worker-vm-size="$WORKER_SIZE" $CUSTOMDOMAIN $PULLSECRET -o table
 
 ################################################################################################## Post Provisioning
 
@@ -167,36 +183,42 @@ az group update -g "$RESOURCEGROUP" --tags "ARO $VERSION Build Date=$BUILDDATE" 
 echo "done."
 
 # Forward Zone Creation (if necessary)
-if [ -n "$CUSTOMDNS" ]; then
-    DNS="$(echo $CUSTOMDNS | cut -f2 -d=)"
-    export DNS
-    if [ -z "$(az network dns zone list -o tsv --query '[*].name' | grep $DNS)" ]; then
-        echo -n "A DNS zone was not detected for $DNS. Creating..."
-	az network dns zone create -n $DNS -g $RESOURCEGROUP -o table >> /dev/null 2>&1
+
+if [ -n "$CUSTOMDOMAIN" ]; then
+
+    CUSTOMDOMAINNAME="$(echo $CUSTOMDOMAIN | cut -f2 -d=)"
+    export CUSTOMDOMAINNAME
+
+    if [ -z "$(az network dns zone list -o tsv --query '[*].name' | grep $CUSTOMDOMAINNAME)" ]; then
+        echo -n "A DNS zone was not detected for $CUSTOMDOMAINNAME Creating..."
+	az network dns zone create -n $CUSTOMDOMAINNAME -g $RESOURCEGROUP -o table >> /dev/null 2>&1
         echo "done." 
         echo " "
         echo "Dumping nameservers for newly created zone..." 
-        az network dns zone show -n $DNS -g $RESOURCEGROUP -o tsv --query 'nameServers'
+        az network dns zone show -n $CUSTOMDOMAINNAME -g $RESOURCEGROUP -o tsv --query 'nameServers'
         echo " "
     else
-        echo "A DNS zone was already detected for $DNS. Skipping zone creation..."
+        echo "A DNS zone was already detected for $CUSTOMDOMAINNAME. Skipping zone creation..."
     fi
-    DNSRG="$(az network dns zone list -o table |grep $DNS | awk '{print $2}')"
+
+    DNSRG="$(az network dns zone list -o table |grep $CUSTOMDOMAINNAME | awk '{print $2}')"
     export DNSRG
-    if [ -z "$(az network dns record-set list -g $DNSRG -z $DNS -o table |grep api)" ]; then
+
+    if [ -z "$(az network dns record-set list -g $DNSRG -z $CUSTOMDOMAINNAME -o table |grep api)" ]; then
         echo -n "An A record for the ARO API does not exist. Creating..." 
         IPAPI="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query apiserverProfile.ip)"
 	export IPAPI
-	az network dns record-set a add-record -z $DNS -g $DNSRG -a $IPAPI -n api -o table >> /dev/null 2>&1
+	az network dns record-set a add-record -z $CUSTOMDOMAINNAME -g $DNSRG -a $IPAPI -n api -o table >> /dev/null 2>&1
         echo "done."
     else
         echo "An A record appears to already exist for the ARO API server. Please verify this in your DNS zone configuration."
     fi
-    if [ -z "$(az network dns record-set list -g $DNSRG -z $DNS -o table |grep apps)" ]; then
+
+    if [ -z "$(az network dns record-set list -g $DNSRG -z $CUSTOMDOMAINNAME -o table |grep apps)" ]; then
         echo -n "An A record for the apps wildcard ingress does not exist. Creating..."
         IPAPPS="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query ingressProfiles[*].ip)"
 	export IPAPPS
-        az network dns record-set a add-record -z $DNS -g $DNSRG -a $IPAPPS -n *.apps -o table >> /dev/null 2>&1
+        az network dns record-set a add-record -z $CUSTOMDOMAINNAME -g $DNSRG -a $IPAPPS -n *.apps -o table >> /dev/null 2>&1
         echo "done."
     else
         echo "An A record appears to already exist for the apps wildcard ingress. Please verify this in your DNS zone configuration."
@@ -218,6 +240,11 @@ echo " "
 echo "$APIPRIVACY API URL"
 echo "-------------------"
 echo "$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query 'apiserverProfile.url' 2>/dev/null)"
+
+echo " "
+echo "To log in to the oc CLI (per accessibility)"
+echo "-------------------------------------------"
+echo "oc login $(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query 'apiserverProfile.url') -u kubeadmin -p $(az aro list-credentials -n $CLUSTER -g $RESOURCEGROUP -o tsv --query 'kubeadminPassword')"
 
 echo " "
 echo "To delete this ARO Cluster"
