@@ -50,7 +50,7 @@ echo " "
 
 echo -n "Enter the name of the machineset you wish to create (some format of what you see above):  > "
 read MACHINESETNAME
-echo -n "Enter the Azure Availability Zone this machineset should create nodes in:  > "
+echo -n "Enter the Azure Availability Zone this machineset should create nodes in (1,2 or 3):  > "
 read WHICHAZ
 echo -n "Enter the number of worker nodes that should be created for this machineset: > "
 read NUMREPLICAS
