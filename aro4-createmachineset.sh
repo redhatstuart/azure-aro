@@ -150,14 +150,16 @@ echo -n "marketplace sku, "
 sed -i'' -e "s/AROSKU/$AROSKU/g" $MACHINESETNAME-template.yaml
 echo -n "worker subnet, "
 sed -i'' -e "s/SUBNET/$SUBNET/g" $MACHINESETNAME-template.yaml
-echo -n "replicas "
+echo -n "replicas t"
 sed -i'' -e "s/NUMREPLICAS/$NUMREPLICAS/g" $MACHINESETNAME-template.yaml
 echo "Done."
+echo " "
 
 echo "Adding new machineset to Azure Red Hat OpenShift cluster $CLUSTERNAME..."
 oc apply -f $MACHINESETNAME-template.yaml
 echo " "
 echo "Script complete."
+echo " "
 
 rm -f $MACHINESETNAME-template.yaml
 
