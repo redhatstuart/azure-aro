@@ -63,7 +63,7 @@ echo -n "Generating new Azure Service Principal Secret..."
 NEWSPSECRET="$(cat /proc/sys/kernel/random/uuid | tr -d '\n\r')"
 echo "Done."
 echo -n "Inserting new secret into existing Azure Service Principal..."
-az ad sp credential reset -n $SPAPPID --credential-description "$(date +%m%d%Y%H%M%S)" --end-date "$expiry" -p $NEWSPSECRET > /dev/null 2>&1
+az ad sp credential reset -n $SPAPPID --credential-description "Rotated by aro4-rotatespkey on $(date +%m%d%Y%H%M%S)" --end-date "$expiry" -p $NEWSPSECRET > /dev/null 2>&1
 echo "Done."
 echo -n "Encoding new secret for insertion into Azure Red Hat OpenShift..."
 NEWSPSECRETENCODED="$(echo -n $NEWSPSECRET | base64 | tr -d '\n\r')"
