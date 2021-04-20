@@ -39,6 +39,19 @@ case $yn in
 esac
 done
 
+while [[ "$valid" -lt 1 || "$valid" -gt 250 ]]
+do
+
+  echo -n "How many years would you like the new service principal key to be valid for from today's date (1-250) >> "
+  read valid
+
+done
+
+expiry="$(date -d "+$valid years" +%Y-%m-%d)"
+echo " "
+echo "The new expiration date will be: $expiry. Sleeping for 10 seconds."
+sleep 10
+
 echo " "
 echo -n "Obtaining Azure Service Principal KeyID..."
 SPSECRETKEYID="$(az ad sp credential list --id $SPAPPID -o tsv | awk '{print $4}')"
@@ -50,7 +63,7 @@ echo -n "Generating new Azure Service Principal Secret..."
 NEWSPSECRET="$(cat /proc/sys/kernel/random/uuid | tr -d '\n\r')"
 echo "Done."
 echo -n "Inserting new secret into existing Azure Service Principal..."
-az ad sp credential reset -n $SPAPPID --credential-description "$(date +%m%d%Y%H%M%S)" --end-date "2299-12-31" -p $NEWSPSECRET > /dev/null 2>&1
+az ad sp credential reset -n $SPAPPID --credential-description "$(date +%m%d%Y%H%M%S)" --end-date "$expiry" -p $NEWSPSECRET > /dev/null 2>&1
 echo "Done."
 echo -n "Encoding new secret for insertion into Azure Red Hat OpenShift..."
 NEWSPSECRETENCODED="$(echo -n $NEWSPSECRET | base64 | tr -d '\n\r')"
