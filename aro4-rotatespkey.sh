@@ -49,7 +49,12 @@ done
 
 expiry="$(date -d "+$valid years" +%Y-%m-%d)"
 echo " "
-echo "The new expiration date will be: $expiry. Sleeping for 10 seconds."
+
+echo "********************************"
+echo "The new expiration date will be:"
+echo "$expiry"
+echo "Sleeping for 10 seconds."
+echo "********************************"
 sleep 10
 
 echo " "
@@ -63,19 +68,26 @@ echo -n "Generating new Azure Service Principal Secret..."
 NEWSPSECRET="$(cat /proc/sys/kernel/random/uuid | tr -d '\n\r')"
 echo "Done."
 echo -n "Inserting new secret into existing Azure Service Principal..."
-az ad sp credential reset -n $SPAPPID --credential-description "Rotated by aro4-rotatespkey on $(date +%m%d%Y%H%M%S)" --end-date "$expiry" -p $NEWSPSECRET > /dev/null 2>&1
+az ad sp credential reset -n $SPAPPID --credential-description "$(date +%m%d%Y%H%M%S)" --end-date "$expiry" -p $NEWSPSECRET > /dev/null 2>&1
 echo "Done."
 echo -n "Encoding new secret for insertion into Azure Red Hat OpenShift..."
 NEWSPSECRETENCODED="$(echo -n $NEWSPSECRET | base64 | tr -d '\n\r')"
 echo "Done."
-echo -n "Patching existing Azure Red Hat OpenShift secrets..."
-oc patch secret azure-credentials -n kube-system -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" > /dev/null 2>&1
-oc patch secret azure-cloud-credentials -n openshift-machine-api -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" > /dev/null 2>&1
-oc patch secret cloud-credentials -n openshift-ingress-operator -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" > /dev/null 2>&1
-oc patch secret installer-cloud-credentials -n openshift-image-registry -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" > /dev/null 2>&1
+echo "Patching existing Azure Red Hat OpenShift secrets..."
+oc patch secret azure-credentials -n kube-system -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" 
+oc patch secret azure-cloud-credentials -n openshift-machine-api -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" 
+oc patch secret cloud-credentials -n openshift-ingress-operator -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" 
+oc patch secret installer-cloud-credentials -n openshift-image-registry -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" 
 echo "Done."
-echo -n "Sleeping for 5 minutes to allow credentials to propogate (do NOT attempt any MachineSet scaling during this time)..."
-sleep 360
+
+echo " "
+echo "Please remember that if you are using the same service principal to connect to Azure Active Directory you will need to"
+echo "update the OpenShift secret for the AAD OAuth connector which is typically 'openid-client-secret-azuread' per Microsoft"
+echo "documentation. Given that every use case is different (using the same SP vs an SP specific for AAD connectivity)"
+echo "this script will not address the patching of AAD secrets."
+echo " "
+echo -n "Sleeping for 10 minutes to allow credentials to propogate (do NOT attempt any MachineSet scaling during this time)..."
+sleep 600 
 echo "Done."
 echo " "
 
