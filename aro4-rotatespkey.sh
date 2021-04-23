@@ -50,11 +50,10 @@ done
 expiry="$(date -d "+$valid years" +%Y-%m-%d)"
 echo " "
 
-echo "********************************"
-echo "The new expiration date will be:"
-echo "$expiry"
-echo "Sleeping for 10 seconds."
-echo "********************************"
+echo "***********************************************"
+echo "* The new expiration date will be: $expiry *"
+echo "* Sleeping for 10 seconds."
+echo "***********************************************"
 sleep 10
 
 echo " "
