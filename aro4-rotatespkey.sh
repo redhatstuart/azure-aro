@@ -52,7 +52,7 @@ echo " "
 
 echo "***********************************************"
 echo "* The new expiration date will be: $expiry *"
-echo "* Sleeping for 10 seconds."
+echo "* Sleeping for 10 seconds. CTL-C to abort.    *"
 echo "***********************************************"
 sleep 10
 
