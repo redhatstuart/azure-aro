@@ -15,6 +15,26 @@
 echo " "
 echo "Rotate Azure Red Hat OpenShift Service Principal Credentials"
 echo "============================================================"
+
+if [ $# -ne 1 ]; then
+    echo "Usage: $BASH_SOURCE <name of cluster>"
+    exit 1
+fi
+
+if [ -z "$(az aro list -o table |grep -i  $1)" ]; then
+    echo "$1 doesn't seem to exist. Review the output of 'az aro list'"
+    exit 1
+fi
+
+clusterName="$(az aro list -o table |grep -i $1 | awk '{print $1}')"
+clusterResourceGroup="$(az aro list -o table |grep -i $1 | awk '{print $2}')"
+
+# We should be logged in as a cluster admin
+if [ "$(oc whoami)" != "kube:admin" ]; then
+   echo "Please log in to your Azure Red Hat OpenShift cluster as the kubeadmin user."
+   exit 1
+fi
+
 echo -n "Obtaining Azure Service Principal AppID for existing cluster..."
 SPAPPID="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
 echo "Done."
@@ -66,18 +86,11 @@ echo "Done."
 echo -n "Generating new Azure Service Principal Secret..."
 NEWSPSECRET="$(cat /proc/sys/kernel/random/uuid | tr -d '\n\r')"
 echo "Done."
-echo -n "Inserting new secret into existing Azure Service Principal..."
+echo -n "Inserting new secret $NEWSPSECRET into existing Azure Service Principal..."
 az ad sp credential reset -n $SPAPPID --credential-description "$(date +%m%d%Y%H%M%S)" --end-date "$expiry" -p $NEWSPSECRET > /dev/null 2>&1
 echo "Done."
-echo -n "Encoding new secret for insertion into Azure Red Hat OpenShift..."
-NEWSPSECRETENCODED="$(echo -n $NEWSPSECRET | base64 | tr -d '\n\r')"
-echo "Done."
-echo "Patching existing Azure Red Hat OpenShift secrets..."
-oc patch secret azure-credentials -n kube-system -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" 
-oc patch secret azure-cloud-credentials -n openshift-machine-api -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" 
-oc patch secret cloud-credentials -n openshift-ingress-operator -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" 
-oc patch secret installer-cloud-credentials -n openshift-image-registry -p="{\"data\":{\"azure_client_secret\": \"$NEWSPSECRETENCODED\"}}" 
-echo "Done."
+echo "Calling the Azure Linux CLI to push the new secret $NEWSPSECRET into Azure Red Hat OpenShift"
+az aro update -n $clusterName -g $clusterResourceGroup --client-id $SPAPPID --client-secret $NEWSPSECRET
 
 echo " "
 echo "Please remember that if you are using the same service principal to connect to Azure Active Directory you will need to"
@@ -85,8 +98,6 @@ echo "update the OpenShift secret for the AAD OAuth connector which is typically
 echo "documentation. Given that every use case is different (using the same SP vs an SP specific for AAD connectivity)"
 echo "this script will not address the patching of AAD secrets."
 echo " "
-echo -n "Sleeping for 10 minutes to allow credentials to propogate (do NOT attempt any MachineSet scaling during this time)..."
-sleep 600 
 echo "Done."
 echo " "
 
