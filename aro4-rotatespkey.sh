@@ -16,6 +16,12 @@ echo " "
 echo "Rotate Azure Red Hat OpenShift Service Principal Credentials"
 echo "============================================================"
 
+# We should be logged in as a cluster admin
+if [ "$(oc whoami)" != "kube:admin" ]; then
+   echo "Please log in to your Azure Red Hat OpenShift cluster as the kubeadmin user."
+   exit 1
+fi
+
 if [ $# -ne 1 ]; then
     echo "Usage: $BASH_SOURCE <name of cluster>"
     exit 1
@@ -28,12 +34,6 @@ fi
 
 clusterName="$(az aro list -o table |grep -i $1 | awk '{print $1}')"
 clusterResourceGroup="$(az aro list -o table |grep -i $1 | awk '{print $2}')"
-
-# We should be logged in as a cluster admin
-if [ "$(oc whoami)" != "kube:admin" ]; then
-   echo "Please log in to your Azure Red Hat OpenShift cluster as the kubeadmin user."
-   exit 1
-fi
 
 echo -n "Obtaining Azure Service Principal AppID for existing cluster..."
 SPAPPID="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
