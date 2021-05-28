@@ -56,7 +56,7 @@ echo -n "apiServer, "
 webConsole="$(az aro show -g $aroRG -n $aroName --query consoleProfile.url -o tsv  2> /dev/null)"
 export webConsole
 echo -n "webConsole, "
-clientSecret="1`cat /dev/urandom | tr -dc 'a-zA-Z0-9@#$%^&*–_!+={}|\?~()]' | fold -w 16 | grep -i '[@#$%^&*–_!+={}|\?~()]' | head -n 1`"
+clientSecret="$(cat /proc/sys/kernel/random/uuid | tr -d '\n\r')"
 export clientSecret
 echo -n "clientSecret, "
 consoleUrl=$(az aro show -g $aroRG -n $aroName -o json 2>/dev/null |jq -r '.consoleProfile.url')
@@ -151,7 +151,7 @@ echo "done."
 echo " "
 echo "Applying revised authentication provider configuration to OpenShift and forcing replication update..."
 oc replace -f oidc.yaml
-oc create secret generic openid-client-secret-azuread --from-literal=clientSecret=$clientSecret --dry-run -o yaml | oc replace -n openshift-config -f -
+oc create secret generic openid-client-secret-azuread --from-literal=clientSecret=$clientSecret --dry-run=client -o yaml | oc replace -n openshift-config -f -
 echo "done."
 
 ########## Clean Up
