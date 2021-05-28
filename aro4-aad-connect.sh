@@ -56,7 +56,7 @@ echo -n "apiServer, "
 webConsole="$(az aro show -g $aroRG -n $aroName --query consoleProfile.url -o tsv  2> /dev/null)"
 export webConsole
 echo -n "webConsole, "
-clientSecret="$(cat /proc/sys/kernel/random/uuid | tr -d '\n\r')"
+clientSecret="$(uuidgen | tr -d '\n\r')"
 export clientSecret
 echo -n "clientSecret, "
 consoleUrl=$(az aro show -g $aroRG -n $aroName -o json 2>/dev/null |jq -r '.consoleProfile.url')
