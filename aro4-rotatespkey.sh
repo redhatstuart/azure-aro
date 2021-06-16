@@ -16,12 +16,6 @@ echo " "
 echo "Rotate Azure Red Hat OpenShift Service Principal Credentials"
 echo "============================================================"
 
-# We should be logged in as a cluster admin
-if [ "$(oc whoami)" != "kube:admin" ]; then
-   echo "Please log in to your Azure Red Hat OpenShift cluster as the kubeadmin user."
-   exit 1
-fi
-
 if [ $# -ne 1 ]; then
     echo "Usage: $BASH_SOURCE <name of cluster>"
     exit 1
@@ -36,7 +30,7 @@ clusterName="$(az aro list -o table |grep -i $1 | awk '{print $1}')"
 clusterResourceGroup="$(az aro list -o table |grep -i $1 | awk '{print $2}')"
 
 echo -n "Obtaining Azure Service Principal AppID for existing cluster..."
-SPAPPID="$(oc get secret azure-credentials -n kube-system -o json | jq -r .data.azure_client_id | base64 --decode)"
+SPAPPID="$(az aro show -n $clusterName -g $clusterResourceGroup --query servicePrincipalProfile.clientId -o tsv)"
 echo "Done."
 echo -n "Obtaining Azure Service Principal credential information..."
 CREATED="$(az ad sp credential list --id $SPAPPID --query '[].startDate' -o tsv)"
@@ -48,7 +42,7 @@ echo "Based on your current Azure Red Hat OpenShift AAD Application ID, $SPAPPID
 echo "Create date: $CREATED"
 echo "Expiration date: $EXPIRING"
 echo " "
-echo "Shall I continue? (you must be logged in as a cluster administrator with 'oc')"
+echo "Shall I continue?"
 PS3="Select a numbered option >> "
 options=("Yes" "No")
 select yn in "${options[@]}"
