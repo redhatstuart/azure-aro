@@ -1,0 +1,82 @@
+{
+  "$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+  "contentVersion": "1.0.0.0",
+  "parameters": {
+    "location": {
+      "value": "westeurope"
+    },
+    "domain": {
+      "value": "somedomain.com"
+    },
+    "clusterVnetName": {
+      "value": "vnet-lab-aro-10_75_0_0__16"
+    },
+    "pullSecret": {
+      "value": ""
+    },
+    "clusterVnetCidr": {
+      "value": "10.75.0.0/16"
+    },
+    "workerSubnetCidr": {
+      "value": "10.75.5.0/24"
+    },
+    "masterSubnetCidr": {
+      "value": "10.75.4.0/24"
+    },
+    "masterVmSize": {
+      "value": "Standard_D8s_v3"
+    },
+    "workerVmSize": {
+      "value": "Standard_D4s_v3"
+    },
+    "workerVmDiskSize": {
+      "value": 128
+    },
+    "workerCount": {
+      "value": 3
+    },
+    "podCidr": {
+      "value": "10.128.0.0/14"
+    },
+    "serviceCidr": {
+      "value": "172.30.0.0/16"
+    },
+    "clusterName": {
+      "value": "some-clustername"
+    },
+    "tags": {
+      "value": {
+
+        "app": "aro",
+        "budgetowner": "Bob Bob"
+        "businessowner": "Bob Bob"
+        "env": "lab",
+        "finansowanie": "formacja",
+        "jira": "nd",
+        "outsourcing": "nie",
+        "platforma": "azure",
+        "ssgw": "l0057",
+        "wk": "nd",
+        "zadanie": "pmc"
+      }
+    },
+    "apiServerVisibility": {
+      "value": "Private"
+    },
+    "ingressVisibility": {
+      "value": "Private"
+    },
+    "aadClientId": {
+      "value": "Azure SP App ID"
+    },
+    "aadObjectId": {
+      "value": "Azure SP Object ID"
+    },
+    "aadClientSecret": {
+      "value": "Azure SP Secret"
+    },
+    "rpObjectId": {
+      "value": "Azure ARO Resource Provider Object ID"
+    }
+  }
+}

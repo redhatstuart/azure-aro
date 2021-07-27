@@ -1,0 +1,284 @@
+{
+    "$schema": "https://schema.management.azure.com/schemas/2019-04-01/deploymentTemplate.json#",
+    "contentVersion": "1.0.0.0",
+    "parameters": {
+      "location" : {
+        "type": "string",
+        "defaultValue": "westeurope",
+        "metadata": {
+          "description": "Location"
+        }
+      },
+      "domain": {
+          "type": "string",
+          "defaultValue": "",
+          "metadata": {
+              "description": "Domain Prefix"
+          }
+      },
+      "pullSecret": {
+          "type": "string",
+          "metadata": {
+              "description": "Pull secret from cloud.redhat.com. The json should be input as a string"
+          }
+      },
+      "clusterVnetName": {
+          "type": "string",
+          "defaultValue": "aro-vnet",
+          "metadata": {
+              "description": "Name of ARO vNet"
+          }
+      },
+      "clusterVnetCidr": {
+          "type": "string",
+          "defaultValue": "10.100.0.0/15",
+          "metadata": {
+              "description": "ARO vNet Address Space"
+          }
+      },
+      "workerSubnetCidr": {
+          "type": "string",
+          "defaultValue": "10.100.70.0/23",
+          "metadata": {
+              "description": "Worker node subnet address space"
+          }
+      },
+      "masterSubnetCidr": {
+          "type": "string",
+          "defaultValue": "10.100.76.0/24",
+          "metadata": {
+              "description": "Master node subnet address space"
+          }
+      },
+      "masterVmSize" : {
+          "type": "string",
+          "defaultValue": "Standard_D8s_v3",
+          "metadata": {
+              "description": "Master Node VM Type"
+          }
+      },
+      "workerVmSize": {
+          "type": "string",
+          "defaultValue": "Standard_D4s_v3",
+          "metadata": {
+              "description": "Worker Node VM Type"
+          }
+      },
+      "workerVmDiskSize": {
+          "type" : "int",
+          "defaultValue": 128,
+          "minValue": 128,
+          "metadata": {
+              "description": "Worker Node Disk Size in GB"
+          }
+      },
+      "workerCount": {
+          "type": "int",
+          "defaultValue": 3,
+          "minValue": 3,
+          "metadata": {
+              "description": "Number of Worker Nodes"
+          }
+      },
+      "podCidr": {
+          "type": "string",
+          "defaultValue": "10.128.0.0/14",
+          "metadata": {
+              "description": "Cidr for Pods"
+          }
+      },
+      "serviceCidr": {
+          "type": "string",
+          "defaultValue": "172.30.0.0/16",
+          "metadata": {
+              "decription": "Cidr of service"
+          }
+      },
+      "clusterName" : {
+        "type": "string",
+        "metadata": {
+          "description": "Unique name for the cluster"
+        }
+      },
+      "tags": {
+          "type": "object",
+          "defaultValue" : {
+              "env": "Dev",
+              "dept": "Ops"
+          },
+          "metadata": {
+              "description": "Tags for resources"
+          }
+      },
+      "apiServerVisibility": {
+          "type": "string",
+          "allowedValues": [
+              "Private",
+              "Public"
+          ],
+          "defaultValue": "Public",
+          "metadata": {
+              "description": "Api Server Visibility"
+          }
+      },
+      "ingressVisibility": {
+          "type": "string",
+          "allowedValues": [
+              "Private",
+              "Public"
+          ],
+          "defaultValue": "Public",
+          "metadata": {
+              "description": "Ingress Visibility"
+          }
+      },
+      "aadClientId" : {
+        "type": "string",
+        "metadata": {
+          "description": "The Application ID of an Azure Active Directory client application"
+        }
+      },
+      "aadObjectId": {
+          "type": "string",
+          "metadata": {
+              "description": "The Object ID of an Azure Active Directory client application"
+          }
+      },
+      "aadClientSecret" : {
+        "type":"securestring",
+        "metadata": {
+          "description": "The secret of an Azure Active Directory client application"
+        }
+      },
+      "rpObjectId": {
+          "type": "String",
+          "metadata": {
+              "description": "The ObjectID of the Resource Provider Service Principal"
+          }
+      }
+    },
+    "variables": {
+        "contribRole": "[concat('/subscriptions/', subscription().subscriptionId, '/providers/Microsoft.Authorization/roleDefinitions/', 'b24988ac-6180-42a0-ab88-20f7382dd24c')]"
+    },
+    "resources": [
+        {
+            "type": "Microsoft.Network/virtualNetworks",
+            "apiVersion": "2020-05-01",
+            "name": "[parameters('clusterVnetName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "properties": {
+                "addressSpace": {
+                "addressPrefixes": [
+                    "[parameters('clusterVnetCidr')]"
+                    ]
+                },
+                "subnets": [
+                {
+                    "name": "master",
+                    "properties": {
+                        "addressPrefix": "[parameters('masterSubnetCidr')]",
+                        "serviceEndpoints": [
+                            {
+                                "service": "Microsoft.ContainerRegistry"
+                            }
+                        ],
+                        "privateLinkServiceNetworkPolicies": "Disabled"
+                    }
+                },
+                {
+                    "name": "worker",
+                    "properties": {
+                        "addressPrefix": "[parameters('workerSubnetCidr')]",
+                        "serviceEndpoints": [
+                            {
+                                "service": "Microsoft.ContainerRegistry"
+                            }
+                        ]
+                    }
+                }]
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/providers/roleAssignments",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[concat(parameters('clusterVnetName'), '/Microsoft.Authorization/', guid(resourceGroup().id, deployment().name, parameters('aadObjectId')))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('clusterVnetName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('contribRole')]",
+                "principalId":"[parameters('aadObjectId')]"
+            }
+        },
+        {
+            "type": "Microsoft.Network/virtualNetworks/providers/roleAssignments",
+            "apiVersion": "2018-09-01-preview",
+            "name": "[concat(parameters('clusterVnetName'), '/Microsoft.Authorization/', guid(resourceGroup().id, deployment().name, parameters('rpObjectId')))]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('clusterVnetName'))]"
+            ],
+            "properties": {
+                "roleDefinitionId": "[variables('contribRole')]",
+                "principalId":"[parameters('rpObjectId')]"
+            }
+        },
+        {
+            "type": "Microsoft.RedHatOpenShift/OpenShiftClusters",
+            "apiVersion": "2020-04-30",
+            "name": "[parameters('clusterName')]",
+            "location": "[parameters('location')]",
+            "tags": "[parameters('tags')]",
+            "dependsOn": [
+                "[resourceId('Microsoft.Network/virtualNetworks', parameters('clusterVnetName'))]"
+            ],
+            "properties": {
+                "clusterProfile": {
+                    "domain": "[parameters('domain')]",
+                    "resourceGroupId": "[concat('/subscriptions/', subscription().subscriptionId,'/resourceGroups/aro-', parameters('domain'))]",
+                    "pullSecret": "[parameters('pullSecret')]"
+                },
+                "networkProfile": {
+                    "podCidr": "[parameters('podCidr')]",
+                    "serviceCidr": "[parameters('serviceCidr')]"
+                },
+                "servicePrincipalProfile": {
+                    "clientId": "[parameters('aadClientId')]",
+                    "clientSecret": "[parameters('aadClientSecret')]"
+                },
+                "masterProfile": {
+                    "vmSize": "[parameters('masterVmSize')]",
+                    "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('clusterVnetName'), 'master')]"
+                },
+                "workerProfiles": [
+                    {
+                        "name": "worker",
+                        "vmSize": "[parameters('workerVmSize')]",
+                        "diskSizeGB": "[parameters('workerVmDiskSize')]",
+                        "subnetId": "[resourceId('Microsoft.Network/virtualNetworks/subnets', parameters('clusterVnetName'), 'worker')]",
+                        "count": "[parameters('workerCount')]"
+                    }
+                ],
+                "apiserverProfile": {
+                    "visibility": "[parameters('apiServerVisibility')]"
+                },
+                "ingressProfiles": [
+                    {
+                        "name": "default",
+                        "visibility": "[parameters('ingressVisibility')]"
+                    }
+                ]
+            }
+        }
+    ],
+    "outputs": {
+         "clusterCredentials": {
+             "type": "object",
+             "value": "[listCredentials(resourceId('Microsoft.RedHatOpenShift/OpenShiftClusters', parameters('clusterName')), '2020-04-30')]"
+         },
+         "oauthCallbackURL": {
+             "type": "string",
+             "value": "[concat('https://oauth-openshift.apps.', parameters('domain'), '.', parameters('location'), '.aroapp.io/oauth2callback/AAD')]"
+         }
+    }
+}
