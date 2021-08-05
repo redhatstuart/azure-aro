@@ -168,18 +168,19 @@ echo " "
 echo "Executing: "
 echo "az aro create -g $RESOURCEGROUP -n $CLUSTER --cluster-resource-group $RESOURCEGROUP-cluster --vnet=$VNET_NAME --vnet-resource-group=$VNET_RG --master-subnet=$CLUSTER-master --worker-subnet=$CLUSTER-worker --ingress-visibility=$INGRESSPRIVACY --apiserver-visibility=$APIPRIVACY --worker-count=$WORKERS --master-vm-size=$MASTER_SIZE --worker-vm-size=$WORKER_SIZE $CUSTOMDOMAIN $PULLSECRET -o table"
 echo " "
-time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group "$RESOURCEGROUP-cluster" --vnet="$VNET_NAME" --vnet-resource-group="$VNET_RG" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" --master-vm-size="$MASTER_SIZE" --worker-vm-size="$WORKER_SIZE" $CUSTOMDOMAIN $PULLSECRET -o table
+time az aro create -g "$RESOURCEGROUP" -n "$CLUSTER" --cluster-resource-group "$RESOURCEGROUP-cluster" --vnet="$VNET_NAME" --vnet-resource-group="$VNET_RG" --master-subnet="$CLUSTER-master" --worker-subnet="$CLUSTER-worker" --ingress-visibility="$INGRESSPRIVACY" --apiserver-visibility="$APIPRIVACY" --worker-count="$WORKERS" --master-vm-size="$MASTER_SIZE" --worker-vm-size="$WORKER_SIZE" $CUSTOMDOMAIN $PULLSECRET --only-show-errors -o table
+
 
 ################################################################################################## Post Provisioning
 
 # Update ARO RG tags
 echo " "
 echo -n "Updating resource group tags..."
-DOMAIN="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query 'clusterProfile.domain' 2>/dev/null)"
+DOMAIN="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --only-show-errors --query 'clusterProfile.domain' 2>/dev/null)"
 export DOMAIN
-VERSION="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query 'clusterProfile.version' 2>/dev/null)"
+VERSION="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --only-show-errors --query 'clusterProfile.version' 2>/dev/null)"
 export VERSION
-az group update -g "$RESOURCEGROUP" --tags "ARO $VERSION Build Date=$BUILDDATE" -o table >> /dev/null 2>&1
+az group update -g "$RESOURCEGROUP" --tags "ARO $VERSION Build Date=$BUILDDATE" --only-show-errors -o table >> /dev/null 2>&1
 echo "done."
 
 # Forward Zone Creation (if necessary)
@@ -191,11 +192,11 @@ if [ -n "$CUSTOMDOMAIN" ]; then
 
     if [ -z "$(az network dns zone list -o tsv --query '[*].name' | grep $CUSTOMDOMAINNAME)" ]; then
         echo -n "A DNS zone was not detected for $CUSTOMDOMAINNAME Creating..."
-	az network dns zone create -n $CUSTOMDOMAINNAME -g $RESOURCEGROUP -o table >> /dev/null 2>&1
+	az network dns zone create -n $CUSTOMDOMAINNAME -g $RESOURCEGROUP --only-show-errors -o table >> /dev/null 2>&1
         echo "done." 
         echo " "
         echo "Dumping nameservers for newly created zone..." 
-        az network dns zone show -n $CUSTOMDOMAINNAME -g $RESOURCEGROUP -o tsv --query 'nameServers'
+        az network dns zone show -n $CUSTOMDOMAINNAME -g $RESOURCEGROUP --only-show-errors -o tsv --query 'nameServers'
         echo " "
     else
         echo "A DNS zone was already detected for $CUSTOMDOMAINNAME. Skipping zone creation..."
@@ -208,7 +209,7 @@ if [ -n "$CUSTOMDOMAIN" ]; then
         echo -n "An A record for the ARO API does not exist. Creating..." 
         IPAPI="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query apiserverProfile.ip)"
 	export IPAPI
-	az network dns record-set a add-record -z $CUSTOMDOMAINNAME -g $DNSRG -a $IPAPI -n api -o table >> /dev/null 2>&1
+	az network dns record-set a add-record -z $CUSTOMDOMAINNAME -g $DNSRG -a $IPAPI -n api --only-show-errors -o table >> /dev/null 2>&1
         echo "done."
     else
         echo "An A record appears to already exist for the ARO API server. Please verify this in your DNS zone configuration."
@@ -218,7 +219,7 @@ if [ -n "$CUSTOMDOMAIN" ]; then
         echo -n "An A record for the apps wildcard ingress does not exist. Creating..."
         IPAPPS="$(az aro show -n $CLUSTER -g $RESOURCEGROUP -o tsv --query ingressProfiles[*].ip)"
 	export IPAPPS
-        az network dns record-set a add-record -z $CUSTOMDOMAINNAME -g $DNSRG -a $IPAPPS -n *.apps -o table >> /dev/null 2>&1
+        az network dns record-set a add-record -z $CUSTOMDOMAINNAME -g $DNSRG -a $IPAPPS -n *.apps --only-show-errors -o table >> /dev/null 2>&1
         echo "done."
     else
         echo "An A record appears to already exist for the apps wildcard ingress. Please verify this in your DNS zone configuration."
