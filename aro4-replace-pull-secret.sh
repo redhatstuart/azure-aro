@@ -44,7 +44,7 @@ echo "done."
 
 # Merge decrypted pull-secret with RHT pull secret
 echo -n "Merging existing ARO pull secret with provided pull secret..."
-jq -s '.[0] * .[1]' geneva-$RAND.json $1 | jq -c 'walk(if type == "object" then . | del(."cloud.openshift.com") else . end)' | tr -d "\n\r" > new-pull-secret-import-$RAND.json
+jq -s '.[0] * .[1]' geneva-$RAND.json $1 | jq 'del(.. | ."cloud.openshift.com"?)' | tr -d "\n\r" > new-pull-secret-import-$RAND.json
 echo "done."
 
 # Push to Openshift
