@@ -1,0 +1,16 @@
+apiVersion: logging.openshift.io/v1
+kind: ClusterLogForwarder
+metadata:
+  name: instance
+  namespace: openshift-logging
+spec:
+  outputs:
+    - name: fluentbit
+      type: fluentdForward
+      url: 'tcp://fluent-bit.azure-log-forwarder:24224'
+  pipelines:
+    - name: forward-to-fluentbit
+      inputRefs:
+        - audit
+      outputRefs:
+        - fluentbit

@@ -1,0 +1,35 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: fluent-bit-config
+  namespace: azure-log-forwarder
+  labels:
+    k8s-app: fluent-bit
+data:
+  fluent-bit.conf: |
+    [SERVICE]
+        Flush         1
+        Log_Level     info
+        Daemon        off
+        Parsers_File  parsers.conf
+        HTTP_Server   On
+        HTTP_Listen   0.0.0.0
+        HTTP_Port     2020
+    @INCLUDE input.conf
+    @INCLUDE output.conf
+
+  output.conf: |
+    [OUTPUT]
+        Name            azure
+        Match           *.*
+        Customer_ID     ${WorkspaceId}
+        Shared_Key      ${SharedKey}
+        Log_Type        openshift
+
+  input.conf: |
+    [INPUT]
+        Name              forward
+        Listen            0.0.0.0
+        Port              24224
+        Buffer_Chunk_Size 1M
+        Buffer_Max_Size   10M
