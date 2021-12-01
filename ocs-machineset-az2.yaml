@@ -5,14 +5,14 @@ metadata:
     machine.openshift.io/cluster-api-cluster: aro-stkirk-bfehg-r2gtq
     machine.openshift.io/cluster-api-machine-role: infra
     machine.openshift.io/cluster-api-machine-type: infra
-  name: aro-stkirk-bfehg-r2gtq-infra-eastus3
+  name: aro-stkirk-bfehg-r2gtq-ocs-eastus2
   namespace: openshift-machine-api
 spec:
-  replicas: 2
+  replicas: 1
   selector:
     matchLabels:
       machine.openshift.io/cluster-api-cluster: aro-stkirk-bfehg-r2gtq
-      machine.openshift.io/cluster-api-machineset: aro-stkirk-bfehg-r2gtq-infra-eastus3
+      machine.openshift.io/cluster-api-machineset: aro-stkirk-bfehg-r2gtq-ocs-eastus2
   template:
     metadata:
       creationTimestamp: null
@@ -20,15 +20,17 @@ spec:
         machine.openshift.io/cluster-api-cluster: aro-stkirk-bfehg-r2gtq
         machine.openshift.io/cluster-api-machine-role: infra
         machine.openshift.io/cluster-api-machine-type: infra
-        machine.openshift.io/cluster-api-machineset: aro-stkirk-bfehg-r2gtq-infra-eastus3 
+        machine.openshift.io/cluster-api-machineset: aro-stkirk-bfehg-r2gtq-ocs-eastus2 
     spec:
       metadata:
         creationTimestamp: null
         labels:
-          node-role.kubernetes.io/infra: "infra" 
-      taints: 
-      - key: node-role.kubernetes.io/infra
-        effect: NoSchedule
+          node-role.kubernetes.io/infra: "" 
+          cluster.ocs.openshift.io/openshift-storage: ""
+      taints:
+      - effect: NoSchedule
+        key: node.ocs.openshift.io/storage
+        value: "true"
       providerSpec:
         value:
           apiVersion: azureproviderconfig.openshift.io/v1beta1
@@ -60,4 +62,4 @@ spec:
             name: worker-user-data 
           vmSize: Standard_D16s_v3
           vnet: aro-stkirk-bfehg-vnet
-          zone: '3'
+          zone: '2'
