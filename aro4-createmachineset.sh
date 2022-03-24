@@ -122,7 +122,8 @@ echo "--------------------------------------------------------------------------
 echo "- PLEASE REFERENCE THE LIST OF SUPPORTED ARO VM SKUs AT: https://docs.microsoft.com/en-us/azure/openshift/support-policies-v4#supported-virtual-machine-sizes -"
 echo "---------------------------------------------------------------------------------------------------------------------------------------------------------------"
 echo " "
-echo -n "Enter the Azure VM SKU you wish to use for this machineset:  > "
+echo "Keep in mind that not all VM SKUs are avaialble in all Azure regions"
+echo -n "Enter the Azure VM SKU you wish to use for this machineset (ex: Standard_E4s_v3):  > "
 read VMSKU
 echo " "
 
@@ -167,7 +168,7 @@ echo -n "marketplace sku, "
 sed -i'' -e "s/AROSKU/$AROSKU/g" $MACHINESETNAME-template.yaml
 echo -n "worker subnet, "
 sed -i'' -e "s/SUBNET/$SUBNET/g" $MACHINESETNAME-template.yaml
-echo -n "replicas t"
+echo -n "replicas, "
 sed -i'' -e "s/NUMREPLICAS/$NUMREPLICAS/g" $MACHINESETNAME-template.yaml
 echo "Done."
 echo " "

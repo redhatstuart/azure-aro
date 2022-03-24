@@ -3,28 +3,28 @@ kind: MachineSet
 metadata: 
   annotations: 
     machine.openshift.io/GPU: "0"
-    machine.openshift.io/memoryMb: "MEMORYMB"
-    machine.openshift.io/vCPU: "VCPUCORES"
+    machine.openshift.io/memoryMb: "8192"
+    machine.openshift.io/vCPU: "4"
   generation: 1
   labels: 
-    machine.openshift.io/cluster-api-cluster: CLUSTERNAME
+    machine.openshift.io/cluster-api-cluster: aro-stkirk-cgibi-dq5bj
     machine.openshift.io/cluster-api-machine-role: worker
     machine.openshift.io/cluster-api-machine-type: worker
-  name: MACHINESETNAME
+  name: stuartblah
   namespace: openshift-machine-api
 spec: 
-  replicas: NUMREPLICAS
+  replicas: 2
   selector: 
     matchLabels: 
-      machine.openshift.io/cluster-api-cluster: CLUSTERNAME
-      machine.openshift.io/cluster-api-machineset: MACHINESETNAME
+      machine.openshift.io/cluster-api-cluster: aro-stkirk-cgibi-dq5bj
+      machine.openshift.io/cluster-api-machineset: stuartblah
   template: 
     metadata: 
       labels: 
-        machine.openshift.io/cluster-api-cluster: CLUSTERNAME
+        machine.openshift.io/cluster-api-cluster: aro-stkirk-cgibi-dq5bj
         machine.openshift.io/cluster-api-machine-role: worker
         machine.openshift.io/cluster-api-machine-type: worker
-        machine.openshift.io/cluster-api-machineset: MACHINESETNAME
+        machine.openshift.io/cluster-api-machineset: stuartblah
     spec: 
       metadata: {}
       providerSpec: 
@@ -36,23 +36,22 @@ spec:
           image: 
             offer: aro4
             publisher: azureopenshift
-            resourceID: ""
-            sku: AROSKU
+            sku: aro_49
             version: AROVERSION
           kind: AzureMachineProviderSpec
-          location: AZUREDC
-          networkResourceGroup: NETWORKRG
+          location: eastus
+          networkResourceGroup: aro-stkirk-cgibi-eastus
           osDisk: 
             diskSizeGB: 128
             managedDisk: 
               storageAccountType: Premium_LRS
             osType: Linux
           publicIP: false
-          publicLoadBalancer: PUBLICLBNAME
-          resourceGroup: PROTECTEDRG
-          subnet: SUBNET
+          publicLoadBalancer: aro-stkirk-cgibi-dq5bj
+          resourceGroup: aro-stkirk-cgibi-eastus-cluster
+          subnet: aro-stkirk-cgibi-worker
           userDataSecret: 
             name: worker-user-data
-          vmSize: VMSKU
-          vnet: VNETNAME
-          zone: WHICHAZ
+          vmSize: Standard_F4s_v2
+          vnet: aro-stkirk-cgibi-vnet
+          zone: 2
