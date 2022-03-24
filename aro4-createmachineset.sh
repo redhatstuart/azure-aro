@@ -23,6 +23,11 @@ echo "--------------------------------------------"
 echo "You must be logged in to your Azure Red Hat OpenShift cluster (oc) as a cluster-admin and into the Azure Linux CLI (az) in the subscription of your ARO cluster"
 echo " "
 
+if [ ! -f "machineset-template.yaml" ]; then
+    echo "Please also obtain the machine-template.yaml file and place it in the same directory in which you are invoking this script."
+    exit 1
+fi
+
 echo -n "Determining the name of an existing machineset..."
 CURRENTMACHINESET="$(oc get machineset -n openshift-machine-api -o jsonpath='{.items[0].metadata.name}')"
 echo "Done."
@@ -97,6 +102,17 @@ echo "Fsv2	Standard_F4s_v2	        4	8"
 echo "Fsv2	Standard_F8s_v2	        8	16"
 echo "Fsv2	Standard_F16s_v2	16	32"
 echo "Fsv2	Standard_F32s_v2	32	64"
+echo " "
+echo "DAY 2 WORKER NODE"
+echo "L4s	Standard_L4s		4	32"
+echo "L8s	Standard_L8s		8	64"
+echo "L16s	Standard_L16s		16	128"
+echo "L32s	Standard_L32s		32	256"
+echo "L8s_v2	Standard_L8s_v2		8	64"
+echo "L16s_v2	Standard_L16s_v2	16	128"
+echo "L32s_v2	Standard_L32s_v2	32	256"
+echo "L48s_v2	Standard_L48s_v2	32	384"
+echo "L64s_v2	Standard_L48s_v2	64	512"
 
 echo " "
 echo "#########################################################################################################################################"
