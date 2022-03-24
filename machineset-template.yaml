@@ -38,7 +38,7 @@ spec:
             publisher: azureopenshift
             resourceID: ""
             sku: AROSKU
-            version: AROVERSION
+            version: AROSKUVERSION
           kind: AzureMachineProviderSpec
           location: AZUREDC
           networkResourceGroup: NETWORKRG
