@@ -173,7 +173,7 @@ sed -i'' -e "s/NUMREPLICAS/$NUMREPLICAS/g" $MACHINESETNAME-template.yaml
 echo "Done."
 echo " "
 
-echo "Adding new machineset to Azure Red Hat OpenShift cluster $CLUSTERNAME..."
+echo -n "Adding new machineset to Azure Red Hat OpenShift cluster $CLUSTERNAME..."
 oc apply -f $MACHINESETNAME-template.yaml
 echo " "
 echo "Script complete."
